@@ -33,6 +33,20 @@ class AIHeli {
     this.acc.lerp(na, 1 - Math.exp(-dt * 4));
     this.vel.copy(nv); this.pos.copy(p);
   }
+  // ease out of the player's way: rise and slide aside, then settle back when clear
+  dodgeFrom(player, p, dt, R = 2.2) {
+    this.dodge ||= new V3(); this._dt ||= new V3();
+    const d = this._dt.copy(p).add(this.dodge).sub(player.pos); const dist = d.length();
+    const want = _z.set(0, 0, 0);
+    if (dist < R) {
+      if (dist > 1e-3) d.divideScalar(dist); else d.set(0, 1, 0);
+      d.y = Math.max(d.y, 0.6); d.normalize();
+      want.copy(d).multiplyScalar((R - dist) * 2.2 + this.dodge.length());
+      if (want.length() > 3) want.setLength(3);
+    }
+    this.dodge.lerp(want, 1 - Math.exp(-dt * (dist < R ? 6 : 1.2)));
+    return p.add(this.dodge);
+  }
   setPath(p, vel, acc, dt) { // exact path state, smooth analytic acceleration (no frame-to-frame noise)
     this.pos.copy(p); this.vel.copy(vel); this.acc.lerp(acc, 1 - Math.exp(-dt * 5));
   }
@@ -57,7 +71,8 @@ class AIHeli {
 
 export class Convoy {
   // mode: 'follow' (AI leads, you follow) | 'lead' (you lead, AI escorts)
-  constructor({ scene, route, makeHeli, count, mode, world, speed = 8 }) {
+  constructor({ scene, route, makeHeli, count, mode, world, speed = 8, sync = true }) {
+    this.sync = sync;
     this.scene = scene; this.route = route; this.mode = mode; this.world = world;
     this.L = route.getLength(); this.count = count; this.spacing = 5.5; this.slotGap = 4.5;
     this.vCruise = speed; this.v = 0; this.s = 0; this.started = false; this.startT = 0; this.laps = 0;
@@ -145,16 +160,25 @@ export class Convoy {
       }
       let v = this.curvatureSpeed(this.s, mission ? this.vPlan * 1.15 : this.vCruise);
       if (this.phase !== 'route') v = 0;
+      let fast = false;
       if (this.started) {
         this.startT += dt;
         if (this.slotDist > 9 && along < 0) v *= THREE.MathUtils.clamp(1 - (this.slotDist - 9) / 22, 0.15, 1);
         if (along > 1.5) v *= 1.25;
+        if (this.sync && this.phase === 'route' && !player.crashed && this.slotDist < 25) {
+          // match your speed along the route, so the convoy stays in step with you
+          const pAlong = player.vel.dot(this.tan(bestS, tmp));
+          if (this.slotDist < 12) v = THREE.MathUtils.clamp(pAlong + along * 0.9, 1.5, 22);
+          // never let you catch the last heli: if you close in, they pull ahead
+          const gap = (this.s - (this.count - 1) * this.spacing) - bestS;
+          if (gap < 4) { v = Math.max(v, Math.max(pAlong, 0) + (4 - gap) * 3.5, 4); fast = true; }
+        }
         if (player.crashed) v = 0;
       } else v = 0;
       if (this.pauseT > 0) { this.pauseT -= dt; v = 0; }
       const ramp = Math.min(1, this.startT / 3);
       const prevV = this.v;
-      this.v += (v * ramp - this.v) * Math.min(1, dt * 1.6);
+      this.v += (v * ramp - this.v) * Math.min(1, dt * (fast ? 6 : this.sync ? 3 : 1.6));
       this.dvdt = (this.dvdt || 0) + (((this.v - prevV) / Math.max(dt, 1e-4)) - (this.dvdt || 0)) * Math.min(1, dt * 4);
       const prev = this.s; this.s += this.v * dt;
       if (Math.floor(this.s / this.L) > Math.floor(prev / this.L)) this.laps++;
@@ -176,6 +200,7 @@ export class Convoy {
         const vel = T.clone().multiplyScalar(this.v);
         const acc = kv.multiplyScalar(this.v * this.v).addScaledVector(T, this.dvdt || 0);
         if (lift < 1) acc.y = 0;
+        if (this.sync && this.started) h.dodgeFrom(player, p, dt);
         h.setPath(p, vel, acc, dt);
         h.heading.copy(T).setY(0).normalize();
         h.finish(dt, this.groundAt);
@@ -215,6 +240,7 @@ export class Convoy {
         }
         if (h.landed) { h.rpm = Math.max(0, h.rpm - dt * 0.22); tgt.copy(h.home); }
         if (h.rpm < 0.85 && !h.landed) tgt.copy(h.pos).setY(this.groundAt(h.pos.x, h.pos.z, h.pos.y) + GEAR_CLEAR);
+        if (this.sync && !h.landed) h.dodgeFrom(player, tgt, dt);
         h.spring(tgt, dt, h.landed ? 4 : 2.6);
         h.finish(dt, this.groundAt);
       });

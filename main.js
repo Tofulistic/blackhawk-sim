@@ -21,11 +21,12 @@ import { blobShadowTex, glowTex } from './textures.js';
 
 const $ = (id) => document.getElementById(id);
 const V3 = THREE.Vector3;
+const _cv = new THREE.Vector3(), _cv2 = new THREE.Vector3();
 
 // ---------------- settings
 const CFG_KEY = 'rcbh.cfg.v1';
 const COARSE = matchMedia('(pointer: coarse)').matches;
-const DEFAULTS = { touch: 'auto', musicVol: 0.6, missionMin: 5, map: 'farm', flight: 'gyro', mission: 'follow', count: '2', cam: 'chase', quality: COARSE ? 'low' : 'high',
+const DEFAULTS = { safe: 'on', touch: 'auto', musicVol: 0.6, missionMin: 5, map: 'farm', flight: 'gyro', mission: 'follow', count: '2', cam: 'chase', quality: COARSE ? 'low' : 'high',
   airRate: 670, airYawRate: 500, uptilt: 20, gyroYawRate: 160, maxAngle: 38, expo: 0.35, yawExpo: 0.25, smoothMs: 30, delayMs: 0, fov: 74, camDist: 0.55, camHeight: 0.33, speed: 8, volume: 0.6 };
 let cfg = { ...DEFAULTS };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY)) || {}); } catch (e) { /* ignore */ }
@@ -87,6 +88,7 @@ class Game {
     if (c.mission !== 'free') {
       const nums = ['21', '34', '47', '62'];
       this.convoy = new Convoy({ scene, route: this.map.route, world: this.world, count: +c.count, mode: c.mission, speed: +c.speed,
+        sync: c.safe !== 'off',
         makeHeli: (i) => buildBlackHawk({ tailNumber: nums[i % 4], tint: i % 2 ? '#e9ecdf' : '#ffffff' }) });
     }
     this.spawn = this.convoy ? this.convoy.playerSpawn() : (() => {
@@ -190,7 +192,10 @@ class Game {
       const n = Math.ceil(dt / (1 / 240)); const h = dt / n;
       for (let i = 0; i < n; i++) { b.step(h, st, pc, this.world); if (b.crashed) break; }
     }
-    if (!b.crashed && this.convoy && this.convoy.collidesWith(b.pos)) b.crash('Mid-air collision');
+    if (!b.crashed && this.convoy) {
+      // safe mode: your heli is never pushed; the convoy dodges you (see ai.js) and contact can't crash you
+      if (this.c.safe === 'off' && this.convoy.collidesWith(b.pos)) b.crash('Mid-air collision');
+    }
     const wl = this.map.waterLevel;
     if (!b.crashed && wl !== undefined && b.pos.y - GEAR_CLEAR < wl + 0.02) b.crash('Splashdown');
     if (b.crashed) {
@@ -247,6 +252,20 @@ class Game {
     this.hud(dt, st);
   }
 
+  // invisible cushion around each convoy heli: you get eased away and can never touch them
+  cushion(b, dt) {
+    const R = 1.4; let near = Infinity;
+    for (const h of this.convoy.helis) {
+      const d = _cv.copy(b.pos).sub(h.pos); const dist = d.length(); near = Math.min(near, dist);
+      if (dist >= R) continue;
+      const n = dist > 1e-3 ? d.divideScalar(dist) : _cv.set(0, 1, 0);
+      const vRel = _cv2.copy(b.vel).sub(h.vel); const vn = vRel.dot(n);
+      if (vn < 0) b.vel.addScaledVector(n, -vn);                 // cancel closing speed
+      b.vel.addScaledVector(n, (R - dist) * 9 * dt);              // gentle push apart
+      b.pos.addScaledVector(n, Math.min(0.04, (R - dist) * 0.25)); // never overlap
+    }
+    this.cushionOn = near < R;
+  }
   updateMission(dt, b) {
     const cv = this.convoy; if (!cv) return;
     if (this.mStart == null) {
