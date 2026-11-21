@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RC Black Hawk Convoy Sim</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#14160f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<style>
+  :root { --ink:#eef0e8; --dim:#a7ab9c; --line:rgba(238,240,232,.16); --panel:rgba(14,16,12,.82); --accent:#d7b23a; --ok:#6fd08c; --warn:#f0a43a; --bad:#f05a4a; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:#0b0c0a; color:var(--ink); font-family:Barlow, system-ui, sans-serif; overflow:hidden; }
+  canvas#view { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .hidden { display:none !important; }
+  h1,h2,h3,.cond { font-family:'Barlow Condensed', sans-serif; letter-spacing:.04em; text-transform:uppercase; }
+
+  /* overlay panels */
+  .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:20px;
+    background:radial-gradient(ellipse at 50% 30%, rgba(40,44,34,.55), rgba(5,6,4,.88)); z-index:20; overflow:auto; }
+  .panel { width:min(760px, 100%); background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:26px 28px;
+    backdrop-filter: blur(10px); box-shadow:0 30px 80px rgba(0,0,0,.5); max-height:calc(100vh - 40px); overflow:auto; }
+  .brand { display:flex; align-items:baseline; gap:12px; margin-bottom:4px; }
+  .brand h1 { margin:0; font-size:40px; line-height:1; font-weight:700; }
+  .brand .tag { color:var(--accent); font-family:'Barlow Condensed'; font-weight:600; letter-spacing:.12em; font-size:14px; }
+  .sub { color:var(--dim); margin:0 0 18px; font-size:14px; }
+  .row { display:grid; grid-template-columns: 130px 1fr; align-items:center; gap:12px; padding:9px 0; border-top:1px solid var(--line); }
+  .row > label { color:var(--dim); font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:.08em; font-size:14px; }
+  .seg { display:flex; flex-wrap:wrap; gap:6px; }
+  .seg button { flex:1 1 auto; min-width:70px; }
+  button { font:inherit; color:var(--ink); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:8px; padding:9px 12px; cursor:pointer; transition:background .15s, border-color .15s; }
+  button:hover { background:rgba(255,255,255,.12); }
+  button.on { background:rgba(215,178,58,.18); border-color:var(--accent); color:#fff; }
+  button.primary { background:var(--accent); color:#16160f; border-color:var(--accent); font-family:'Barlow Condensed'; font-weight:700; font-size:22px; letter-spacing:.12em; padding:12px 34px; }
+  button.primary:hover { filter:brightness(1.08); }
+  .actions { display:flex; gap:10px; align-items:center; margin-top:18px; flex-wrap:wrap; }
+  .pad-status { display:flex; align-items:center; gap:8px; font-size:14px; color:var(--dim); margin-bottom:6px; }
+  .dot { width:9px; height:9px; border-radius:50%; background:#555; flex:none; }
+  .dot.ok { background:var(--ok); box-shadow:0 0 8px var(--ok); }
+  details { margin-top:14px; border-top:1px solid var(--line); padding-top:10px; }
+  summary { cursor:pointer; color:var(--dim); font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:.08em; }
+  .help { font-size:14px; line-height:1.55; color:#cfd2c6; }
+  .help ol { padding-left:20px; margin:8px 0; }
+  .sliders { display:grid; grid-template-columns: 1fr 1fr; gap:6px 22px; margin-top:8px; }
+  .sliders label { display:flex; justify-content:space-between; font-size:13px; color:var(--dim); }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  kbd { background:rgba(255,255,255,.1); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:12px; }
+
+  /* setup */
+  .axes { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:6px 14px; margin:10px 0 14px; }
+  .axis { font-size:12px; color:var(--dim); }
+  .bar { height:8px; background:rgba(255,255,255,.08); border-radius:4px; position:relative; overflow:hidden; margin-top:3px; }
+  .bar i { position:absolute; top:0; bottom:0; left:50%; background:var(--accent); }
+  .bar.uni i { left:0; }
+  .map-row { display:grid; grid-template-columns: 120px 1fr 90px 90px; gap:10px; align-items:center; padding:7px 0; border-top:1px solid var(--line); font-size:14px; }
+  .map-row .cur { color:var(--dim); }
+  .prompt { min-height:24px; color:var(--accent); font-weight:600; margin:8px 0; }
+  .btns { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; }
+  .btns span { font-size:11px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,.08); color:var(--dim); }
+  .btns span.on { background:var(--accent); color:#111; }
+
+  /* HUD */
+  #hud { position:fixed; inset:0; pointer-events:none; z-index:10; font-family:'Barlow Condensed', sans-serif; text-transform:uppercase; letter-spacing:.06em; }
+  .hud-tl { position:absolute; left:18px; top:14px; font-size:15px; color:var(--ink); text-shadow:0 1px 3px rgba(0,0,0,.8); line-height:1.35; }
+  .hud-tl .k { color:var(--dim); }
+  .hud-tc { position:absolute; left:50%; top:12px; transform:translateX(-50%); text-align:center; text-shadow:0 1px 4px rgba(0,0,0,.9); }
+  .hud-tc .status { font-size:30px; font-weight:700; line-height:1; }
+  .hud-tc .meta { font-size:15px; color:#d9dccf; }
+  .hud-tr { position:absolute; right:18px; top:14px; text-align:right; font-size:15px; text-shadow:0 1px 3px rgba(0,0,0,.8); line-height:1.35; }
+  .hud-bl { position:absolute; left:18px; bottom:16px; display:flex; gap:16px; align-items:flex-end; text-shadow:0 1px 3px rgba(0,0,0,.8); }
+  .gauge { font-size:14px; color:var(--dim); }
+  .gauge b { display:block; font-size:28px; color:var(--ink); line-height:1; font-weight:600; }
+  .thr { width:12px; height:86px; border:1px solid rgba(255,255,255,.35); border-radius:3px; position:relative; background:rgba(0,0,0,.3); }
+  .thr i { position:absolute; left:0; right:0; bottom:0; background:var(--accent); }
+  .thr em { position:absolute; left:-4px; right:-4px; height:2px; background:#fff; top:50%; opacity:.5; }
+  .hud-br { position:absolute; right:18px; bottom:16px; display:flex; gap:10px; }
+  .stick { width:74px; height:74px; border:1px solid rgba(255,255,255,.3); border-radius:8px; position:relative; background:rgba(0,0,0,.28); }
+  .stick::before, .stick::after { content:''; position:absolute; background:rgba(255,255,255,.15); }
+  .stick::before { left:50%; top:4px; bottom:4px; width:1px; } .stick::after { top:50%; left:4px; right:4px; height:1px; }
+  .stick i { position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px rgba(215,178,58,.8); }
+  .center-msg { position:absolute; left:50%; top:38%; transform:translate(-50%,-50%); font-size:40px; font-weight:700; text-align:center; text-shadow:0 2px 10px rgba(0,0,0,.9); }
+  .center-msg small { display:block; font-size:18px; font-weight:500; color:#dcdfd2; letter-spacing:.08em; }
+  .armed { display:inline-block; padding:1px 8px; border-radius:4px; font-weight:700; }
+  .armed.on { background:var(--bad); color:#fff; } .armed.off { background:rgba(255,255,255,.15); color:var(--dim); }
+  #edgeArrow { position:absolute; width:0; height:0; border-left:12px solid transparent; border-right:12px solid transparent; border-bottom:24px solid var(--ok); filter:drop-shadow(0 0 4px rgba(0,0,0,.8)); }
+  .hint { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); font-size:13px; color:rgba(255,255,255,.55); }
+  .resbody div { display:flex; justify-content:space-between; padding:7px 2px; border-top:1px solid var(--line); font-size:15px; }
+  .resbody b { font-family:'Barlow Condensed'; font-size:20px; }
+  .resbody .tot b { color:var(--accent); font-size:26px; }
+  #results { background:rgba(5,6,4,.55); }
+  /* touch sticks */
+  .phonebox { display:flex; gap:16px; align-items:center; margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.03); }
+  .qr { background:#fff; padding:8px; border-radius:8px; width:156px; height:156px; flex:none; }
+  .qr img, .qr canvas { width:140px !important; height:140px !important; }
+  .plink { font-size:12px; word-break:break-all; color:#cfd2c6; user-select:all; }
+  .pcode { font-family:'Barlow Condensed'; font-size:40px; letter-spacing:.3em; color:var(--accent); line-height:1; }
+  #padui { position:fixed; left:0; right:0; top:0; z-index:15; padding:10px 14px; background:linear-gradient(rgba(10,12,8,.95), rgba(10,12,8,.7)); }
+  .padtitle { font-family:'Barlow Condensed'; letter-spacing:.06em; text-transform:uppercase; font-size:16px; margin-bottom:6px; }
+  .padrow { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .padrow input { width:90px; font:inherit; font-size:18px; letter-spacing:.2em; text-transform:lowercase; padding:7px 10px; border-radius:8px; border:1px solid var(--line); background:rgba(255,255,255,.08); color:var(--ink); }
+  body.padpage { background:radial-gradient(ellipse at 50% 60%, #22261c, #0b0c0a); }
+  body.padpage canvas#view { display:none; }
+  body.padpage .tbtns { top:auto; bottom:14px; left:50%; right:auto; transform:translateX(-50%); }
+  #touch { position:fixed; inset:0; z-index:12; pointer-events:none; }
+  .tz { position:absolute; bottom:0; width:50%; height:72%; pointer-events:auto; touch-action:none; }
+  .tz.l { left:0; } .tz.r { right:0; }
+  .tbase { position:absolute; width:150px; height:150px; margin:-75px 0 0 -75px; border-radius:50%; border:2px solid rgba(255,255,255,.35); background:rgba(0,0,0,.18); }
+  .tz.l .tbase { left:22%; top:62%; } .tz.r .tbase { left:78%; top:62%; }
+  .tbase.live { border-color:rgba(215,178,58,.8); }
+  .tknob { position:absolute; left:50%; top:50%; width:62px; height:62px; border-radius:50%; background:rgba(215,178,58,.85); transform:translate(-50%,-50%); box-shadow:0 0 12px rgba(0,0,0,.5); }
+  .tlab { position:absolute; bottom:8px; width:100%; text-align:center; font-family:'Barlow Condensed'; letter-spacing:.1em; font-size:12px; color:rgba(255,255,255,.45); }
+  .tbtns { position:absolute; top:88px; right:12px; display:flex; flex-direction:row; gap:6px; pointer-events:auto; }
+  .tbtns button { padding:8px 12px; font-family:'Barlow Condensed'; letter-spacing:.08em; background:rgba(0,0,0,.45); min-width:76px; }
+  .tbtns button.on { background:var(--bad); border-color:var(--bad); }
+  body.touchmode .hud-br, body.touchmode .hint { display:none; }
+  body.touchmode .hud-bl { bottom:auto; top:96px; left:14px; transform:scale(.8); transform-origin:left top; }
+  body.touchmode .hud-tl { font-size:12px; }
+  @media (max-height:500px) { .hud-tc .status { font-size:22px; } .hud-tc .meta { font-size:12px; } .center-msg { font-size:28px; } .tbase { width:120px; height:120px; margin:-60px 0 0 -60px; } }
+  @media (max-width:640px) { .row { grid-template-columns: 1fr; } .map-row { grid-template-columns: 1fr 1fr; } .hud-br { display:none; } }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="hud" class="hidden">
+  <div class="hud-tl" id="hudTL"></div>
+  <div class="hud-tc"><div class="status" id="hudStatus"></div><div class="meta" id="hudMeta"></div></div>
+  <div class="hud-tr" id="hudTR"></div>
+  <div class="hud-bl">
+    <div class="thr"><i id="thrBar"></i><em></em></div>
+    <div class="gauge">Alt<b id="hudAlt">0.0</b></div>
+    <div class="gauge">Speed<b id="hudSpd">0</b></div>
+    <div class="gauge">Rotor<b id="hudRpm">0%</b></div>
+    <div class="gauge"><span id="hudArm" class="armed off">DISARMED</span></div>
+  </div>
+  <div class="hud-br"><div class="stick"><i id="stickL"></i></div><div class="stick"><i id="stickR"></i></div></div>
+  <div class="center-msg" id="centerMsg"></div>
+  <div id="edgeArrow" class="hidden"></div>
+  <div class="hint" id="hint">Esc menu · R reset · C camera</div>
+</div>
+
+<div id="menu" class="overlay">
+  <div class="panel">
+    <div class="brand"><h1>RC Black Hawk</h1><span class="tag">Convoy Sim</span></div>
+    <p class="sub">Scale RC helicopter sim for your RadioMaster Pocket over Bluetooth (ELRS BLE Joystick) or USB.</p>
+    <div class="pad-status"><span class="dot" id="padDot"></span><span id="padText">No controller detected. Move a stick after pairing.</span></div>
+    <div class="row"><label>Map</label><div class="seg" data-key="map">
+      <button data-v="farm">Farm · Sunset</button><button data-v="yard">Container Yard · Night</button>
+      <button data-v="desert">Desert FOB · Afternoon</button><button data-v="forest">Forest River · Morning mist</button><button data-v="beach">Beach · Sunrise</button></div></div>
+    <div class="row"><label>Flight mode</label><div class="seg" data-key="flight">
+      <button data-v="gyro">Angle / Gyro (self-level) · beginners</button><button data-v="air">Air mode (FPV acro)</button></div></div>
+    <div class="row"><label>Mission</label><div class="seg" data-key="mission">
+      <button data-v="follow">Follow the convoy</button><button data-v="lead">Lead the convoy</button><button data-v="free">Free flight</button></div></div>
+    <div class="row"><label>Convoy size</label><div class="seg" data-key="count">
+      <button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button></div></div>
+    <div class="row"><label>Camera</label><div class="seg" data-key="cam">
+      <button data-v="chase">Chase (video style)</button><button data-v="cockpit">FPV (nose cam)</button><button data-v="pilot">Pilot on ground</button></div></div>
+    <div class="row"><label>Phone sticks</label><div class="seg" data-key="touch">
+      <button data-v="auto">Auto (on for phones)</button><button data-v="on">Always on</button><button data-v="off">Off</button></div></div>
+    <div class="row"><label>Convoy song</label><div>
+      <div class="seg"><button id="btnMusic">Choose song…</button><button id="btnMusicClear" class="hidden">Remove</button></div>
+      <div class="sub" id="musicName" style="margin:6px 0 0"></div>
+      <div class="sliders" id="musicSliders" style="grid-template-columns:1fr;margin-top:4px"></div>
+      <input type="file" id="musicFile" accept="audio/*" class="hidden">
+    </div></div>
+    <div class="row"><label>Graphics</label><div class="seg" data-key="quality">
+      <button data-v="high">High (reflections, shadows)</button><button data-v="low">Low (faster)</button></div></div>
+    <details open>
+      <summary>Rates &amp; input (expo, smoothing, delay)</summary>
+      <div class="sliders" id="inputSliders"></div>
+    </details>
+    <details>
+      <summary>Camera, convoy &amp; sound</summary>
+      <div class="sliders" id="sliders"></div>
+    </details>
+    <details>
+      <summary>How to connect the Pocket over Bluetooth</summary>
+      <div class="help">
+        <ol>
+          <li>On the Pocket, make or pick a sim model with the <b>internal module set to CRSF / ExpressLRS</b>.</li>
+          <li>Press <b>SYS</b>, open the <b>ExpressLRS</b> tool, scroll to <b>[BLE Joystick]</b> and press Enter.</li>
+          <li>On your computer, pair <b>“ExpressLRS Joystick”</b> in Bluetooth settings.</li>
+          <li>Come back here, move a stick, then open <b>Controller setup</b> to map your sticks and arm switch.</li>
+        </ol>
+        Use Chrome or Edge. A USB cable in joystick mode works too. No radio? Keyboard: <kbd>W</kbd>/<kbd>S</kbd> throttle, <kbd>A</kbd>/<kbd>D</kbd> yaw, arrows pitch/roll, <kbd>Space</kbd> arm, <kbd>R</kbd> reset.
+      </div>
+    </details>
+    <details>
+      <summary>Let a friend fly with their phone</summary>
+      <div class="help">
+        <p style="margin:6px 0"><b>Play on the phone:</b> open this site on the phone and on-screen sticks appear automatically. Turn it sideways, tap <b>Full screen</b>, pick <b>Angle / Gyro</b> (recommended for beginners) or <b>Air mode</b>, then <b>Fly</b>.</p>
+        <p style="margin:6px 0"><b>Phone as the controller for this computer:</b> install a "phone as gamepad" app that makes the computer see an Xbox controller (for example <i>Remote Gamepad</i>, or the free <i>VGamepadWeb</i>), pair it using the app's own steps, then move a stick here. Left stick = climb + turn (centre holds height in Angle mode), right stick = tilt, <b>Y</b> = reset.</p>
+        <p style="margin:6px 0"><b>Install as an app:</b> in Chrome, use the install icon in the address bar (or menu ▸ <i>Add to Home screen</i> on a phone).</p>
+      </div>
+    </details>
+    <div class="actions">
+      <button class="primary" id="btnFly">Fly</button>
+      <button id="btnFull">Full screen</button>
+      <button id="btnSetup">Controller setup</button>
+      <span id="loadMsg" class="sub" style="margin:0"></span>
+    </div>
+  </div>
+</div>
+
+<div id="setup" class="overlay hidden">
+  <div class="panel">
+    <div class="brand"><h1 style="font-size:32px">Controller setup</h1></div>
+    <p class="sub" id="setupPad">Waiting for controller…</p>
+    <div class="axes" id="axesLive"></div>
+    <div class="btns" id="btnsLive"></div>
+    <div class="prompt" id="setupPrompt"></div>
+    <div id="mapRows"></div>
+    <div class="row" style="grid-template-columns:130px 1fr"><label>Live output</label><div class="axes" id="outLive" style="margin:0"></div></div>
+    <div class="actions">
+      <button id="btnCal">Calibrate ranges</button>
+      <button id="btnDefaults">Reset to defaults</button>
+      <button class="primary" id="btnSetupDone" style="font-size:18px;padding:9px 26px">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="pause" class="overlay hidden">
+  <div class="panel" style="width:min(380px,100%);text-align:center">
+    <h2 style="margin:0 0 16px;font-size:30px">Paused</h2>
+    <div style="display:grid;gap:8px">
+      <button class="primary" id="btnResume">Resume</button>
+      <button id="btnRestart">Restart</button>
+      <button id="btnPauseSetup">Controller setup</button>
+      <button id="btnQuit">Main menu</button>
+    </div>
+    <details style="text-align:left"><summary>Rates &amp; input</summary><div class="sliders" id="pauseSliders" style="grid-template-columns:1fr"></div></details>
+  </div>
+</div>
+
+<div id="results" class="overlay hidden">
+  <div class="panel" style="width:min(420px,100%);text-align:center">
+    <h2 id="resTitle" style="margin:0 0 14px;font-size:28px">Convoy home</h2>
+    <div id="resBody" class="resbody"></div>
+    <div style="display:grid;gap:8px;margin-top:16px"><button class="primary" id="btnAgain">Fly again</button><button id="btnResMenu">Main menu</button></div>
+  </div>
+</div>
+
+<div id="padui" class="hidden">
+  <div class="padbar">
+    <div class="padtitle">RC Black Hawk · <b>Phone controller</b></div>
+    <div class="padrow"><input id="padCode" maxlength="6" placeholder="code" autocomplete="off" autocapitalize="off"><button id="padConnect">Connect</button>
+      <span class="seg" id="padModes"><button data-v="gyro">Angle (easy)</button><button data-v="air">Air (acro)</button></span>
+      <button id="padFly" class="primary hidden" style="font-size:16px;padding:7px 18px">FLY</button></div>
+    <div class="pad-status" style="margin:4px 0 0"><span class="dot" id="padDot2"></span><span id="padStatus">Enter the code shown on the laptop</span></div>
+  </div>
+</div>
+
+<div id="touch" class="hidden">
+  <div class="tz l"><div class="tbase"><div class="tknob"></div></div><span class="tlab">CLIMB · TURN</span></div>
+  <div class="tz r"><div class="tbase"><div class="tknob"></div></div><span class="tlab">TILT</span></div>
+  <div class="tbtns"><button id="tArm" class="on">DISARM</button><button id="tReset">RESET</button><button id="tCam">CAM</button><button id="tPause">❚❚</button></div>
+</div>
+
+<script type="module" src="./main.js"></script>
+<script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
+</body>
+</html>
