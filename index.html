@@ -103,7 +103,7 @@
   /* touch sticks */
   .phonebox { display:flex; gap:16px; align-items:center; margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.03); }
   .qr { background:#fff; padding:8px; border-radius:8px; width:156px; height:156px; flex:none; }
-  .qr img, .qr canvas { width:140px !important; height:140px !important; }
+  .qr svg { width:140px; height:140px; display:block; }
   .plink { font-size:12px; word-break:break-all; color:#cfd2c6; user-select:all; }
   .pcode { font-family:'Barlow Condensed'; font-size:40px; letter-spacing:.3em; color:var(--accent); line-height:1; }
   #padui { position:fixed; left:0; right:0; top:0; z-index:15; padding:10px 14px; background:linear-gradient(rgba(10,12,8,.95), rgba(10,12,8,.7)); }
@@ -167,6 +167,21 @@
       <button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button></div></div>
     <div class="row"><label>Camera</label><div class="seg" data-key="cam">
       <button data-v="chase">Chase (video style)</button><button data-v="cockpit">FPV (nose cam)</button><button data-v="pilot">Pilot on ground</button></div></div>
+    <div class="row"><label>Phone controller</label><div>
+      <div class="seg"><button id="btnPhone">Use a phone as the controller</button></div>
+      <div id="phoneBox" class="phonebox hidden">
+        <div id="qr" class="qr"></div>
+        <div>
+          <div class="sub" style="margin:0 0 4px">On the phone, scan the code or open this link in Chrome or Safari (no app needed):</div>
+          <div class="plink" id="phoneLink"></div>
+          <button id="btnCopyLink" style="margin-top:6px;padding:5px 10px;font-size:13px">Copy link</button>
+          <div class="sub" style="margin:6px 0 0;font-size:12px">Works best with the phone and laptop on the same Wi-Fi.</div>
+          <div class="sub" style="margin:8px 0 2px">or enter this code on the phone:</div>
+          <div class="pcode" id="phoneCode"></div>
+          <div class="pad-status" style="margin-top:8px"><span class="dot" id="phoneDot"></span><span id="phoneStatus"></span></div>
+        </div>
+      </div>
+    </div></div>
     <div class="row"><label>Phone sticks</label><div class="seg" data-key="touch">
       <button data-v="auto">Auto (on for phones)</button><button data-v="on">Always on</button><button data-v="off">Off</button></div></div>
     <div class="row"><label>Convoy song</label><div>
@@ -200,8 +215,15 @@
     <details>
       <summary>Let a friend fly with their phone</summary>
       <div class="help">
-        <p style="margin:6px 0"><b>Play on the phone:</b> open this site on the phone and on-screen sticks appear automatically. Turn it sideways, tap <b>Full screen</b>, pick <b>Angle / Gyro</b> (recommended for beginners) or <b>Air mode</b>, then <b>Fly</b>.</p>
-        <p style="margin:6px 0"><b>Phone as the controller for this computer:</b> install a "phone as gamepad" app that makes the computer see an Xbox controller (for example <i>Remote Gamepad</i>, or the free <i>VGamepadWeb</i>), pair it using the app's own steps, then move a stick here. Left stick = climb + turn (centre holds height in Angle mode), right stick = tilt, <b>Y</b> = reset.</p>
+        <p style="margin:6px 0"><b>Phone as the controller, game on this laptop (nothing to install):</b></p>
+        <ol>
+          <li>Here on the laptop, click <b>Use a phone as the controller</b>. A QR code and a 4-letter code appear.</li>
+          <li>Scan the QR code with the phone's camera and open it in Chrome or Safari, or open this site on the phone and add <code>#pad</code> to the address, then type the code.</li>
+          <li>The phone turns into a gamepad. Turn it sideways, pick <b>Angle (easy)</b> (recommended) or <b>Air (acro)</b>, then tap <b>FLY</b>.</li>
+          <li>Left thumb: up/down = climb/descend, left/right = turn. Right thumb: tilt. Let go and the stick re-centres; in Angle mode the heli then holds its height.</li>
+          <li>Keep both on the same Wi-Fi for the least lag. If the signal drops, the heli just hovers until it reconnects.</li>
+        </ol>
+        <p style="margin:6px 0"><b>Or play on the phone itself:</b> open this site on the phone and on-screen sticks appear automatically.</p>
         <p style="margin:6px 0"><b>Install as an app:</b> in Chrome, use the install icon in the address bar (or menu ▸ <i>Add to Home screen</i> on a phone).</p>
       </div>
     </details>

@@ -453,7 +453,7 @@ addEventListener('resize', () => game?.resize());
 
 // phone controller (laptop side)
 function phoneUI(s) {
-  const txt = { connecting: 'Connecting…', waiting: 'Waiting for the phone…', connected: 'Phone connected ✓', unavailable: 'Phone link unavailable.', off: '' }[s] || s;
+  const txt = { connecting: 'Connecting…', waiting: 'Waiting for the phone…', connected: 'Phone connected ✓', unavailable: 'Couldn’t reach the pairing service. Check the internet and click New code.', taken: 'That code is busy. Click New code.', off: '' }[s] || s;
   $('phoneStatus').textContent = txt; $('phoneDot').classList.toggle('ok', s === 'connected');
   $('padDot').classList.toggle('ok', s === 'connected' || !!input.pad());
   if (s === 'connected') $('padText').textContent = 'Phone controller connected';
@@ -467,18 +467,27 @@ link.onevent = (k) => {
   if (k === 'pause') setPaused(!game.paused);
 };
 function loadQR() {
-  return new Promise((res) => {
-    if (window.QRCode) return res(true);
-    const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-    sc.onload = () => res(true); sc.onerror = () => res(false); document.head.appendChild(sc);
+  const srcs = ['https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js'];
+  const tryLoad = (i) => new Promise((res) => {
+    if (typeof window.qrcode === 'function') return res(true);
+    if (i >= srcs.length) return res(false);
+    const sc = document.createElement('script'); sc.src = srcs[i];
+    sc.onload = () => res(typeof window.qrcode === 'function' ? true : tryLoad(i + 1)); sc.onerror = () => res(tryLoad(i + 1));
+    document.head.appendChild(sc);
   });
+  return tryLoad(0);
 }
-if ($('btnPhone')) $('btnPhone').onclick = async () => {
+$('btnPhone').onclick = async () => {
   const code = newCode(); const url = `${SITE_URL}#pad-${code}`;
-  $('phoneBox').classList.remove('hidden'); $('phoneCode').textContent = code; $('phoneLink').textContent = url; $('qr').innerHTML = '';
+  $('phoneBox').classList.remove('hidden'); $('phoneCode').textContent = code; $('phoneLink').textContent = url;
   $('btnPhone').textContent = 'New code';
-  if (await loadQR()) new window.QRCode($('qr'), { text: url, width: 140, height: 140, correctLevel: window.QRCode.CorrectLevel.M });
-  else $('qr').classList.add('hidden');
+  const box = $('qr'); box.innerHTML = ''; box.classList.remove('hidden');
+  let ok = false;
+  if (await loadQR()) {
+    try { const q = window.qrcode(0, 'M'); q.addData(url); q.make(); box.innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); ok = true; } catch (e) { ok = false; }
+  }
+  if (!ok) box.classList.add('hidden');
+  $('btnCopyLink').onclick = () => { navigator.clipboard?.writeText(url).then(() => { $('btnCopyLink').textContent = 'Copied ✓'; }, () => {}); };
   link.host(code);
 };
 
