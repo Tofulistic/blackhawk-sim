@@ -17,6 +17,7 @@ import { Music } from './music.js';
 import { BuiltinTrack } from './synth.js';
 import { initTouch } from './touch.js';
 import { runSplash } from './splash.js';
+import { CineCam } from './cinecam.js';
 import { initIndicators, animatePane, swapText, enterMenu, reveal } from './menuanim.js';
 import { PhoneLink, runPadPage, newCode, SITE_URL } from './phone.js';
 import { helipadTex } from './textures.js';
@@ -125,7 +126,7 @@ class Game {
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
 
-    this.t = 0; this.camK = 1; this.camRoll = 0; this.camYaw = this.spawn.yaw; this.camPos = new V3(); this.crashT = 0; this.freezeT = 0; this.paused = false;
+    this.cine = new CineCam(); this.t = 0; this.camK = 1; this.camRoll = 0; this.camYaw = this.spawn.yaw; this.camPos = new V3(); this.crashT = 0; this.freezeT = 0; this.paused = false;
     this.debris = []; this.camMode = c.cam; this.hudT = 0; this.wasArmReq = false; this.armBlockedMsg = 0;
     this.placeCameraInstant();
   }
@@ -320,6 +321,8 @@ class Game {
   updateCamera(dt, instant = false) {
     const cam = this.camera, b = this.body;
     if (this.camMode === 'debug') return;
+    document.body.classList.toggle('cine', this.camMode === 'cine');
+    if (this.camMode === 'cine') { if (instant) this.cine.shot = null; this.cine.update(Math.max(dt, 1 / 120), this, cam); cam.updateProjectionMatrix(); return; }
     cam.near = this.camMode === 'cockpit' ? 0.012 : 0.06;
     if (this.camMode === 'chase') {
       const target = this.heading();
@@ -480,7 +483,7 @@ $('btnSetup').onclick = () => { $('menu').classList.add('hidden'); setup.open();
 $('btnPauseSetup').onclick = () => { $('pause').classList.add('hidden'); setup.open(); };
 
 const touch = initTouch(input, {
-  onCam: () => { if (game) { const order = ['chase', 'gunner', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % order.length]; } },
+  onCam: () => { if (game) { const order = ['chase', 'cine', 'gunner', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % order.length]; if (game.cine) game.cine.shot = null; } },
   onPause: () => setPaused(true),
 });
 const wantTouch = () => cfg.touch === 'on' || (cfg.touch === 'auto' && COARSE);
@@ -492,6 +495,7 @@ function startGame() {
       allTracks((t) => t.stop());
       game = new Game({ ...cfg });
       $('menu').classList.add('hidden'); $('hud').classList.remove('hidden'); $('loadMsg').textContent = '';
+      $('splash')?.classList.add('hidden');
       touch.show(wantTouch());
       audio.start();
     } catch (err) { console.error(err); $('loadMsg').textContent = 'Error: ' + err.message; }
@@ -502,7 +506,7 @@ function setPaused(p) {
   if (!game) return; game.paused = p; $('pause').classList.toggle('hidden', !p);
   if (p) { audio.mute(); allTracks((t) => t.pause()); } else allTracks((t) => t.resume());
 }
-function toMenu() { setPaused(false); allTracks((t) => t.stop()); game.dispose(); game = null; audio.mute(); touch.show(false); $('results').classList.add('hidden'); $('hud').classList.add('hidden'); $('menu').classList.remove('hidden'); placeInd(true); enterMenu(); }
+function toMenu() { document.body.classList.remove('cine'); setPaused(false); allTracks((t) => t.stop()); game.dispose(); game = null; audio.mute(); touch.show(false); $('results').classList.add('hidden'); $('hud').classList.add('hidden'); $('menu').classList.remove('hidden'); placeInd(true); enterMenu(); }
 $('btnResume').onclick = () => setPaused(false);
 $('btnRestart').onclick = () => { game.restart(); setPaused(false); };
 $('btnQuit').onclick = toMenu;
@@ -510,7 +514,7 @@ $('btnAgain').onclick = () => { game.restart(); };
 $('btnResMenu').onclick = toMenu;
 addEventListener('keydown', (e) => {
   if (e.code === 'Escape' && game && $('setup').classList.contains('hidden')) setPaused(!game.paused);
-  if (e.code === 'KeyC' && game) { const order = ['chase', 'gunner', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % order.length]; }
+  if (e.code === 'KeyC' && game) { const order = ['chase', 'cine', 'gunner', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % order.length]; if (game.cine) game.cine.shot = null; }
   if (e.code === 'KeyV' && game) game.gunSide = -(game.gunSide || 1);
   if (e.code === 'KeyM') { cfg.musicVol = cfg.musicVol > 0 ? 0 : 0.6; allTracks((t) => t.setVolume(cfg.musicVol)); saveCfg(); for (const s of sliderEls) if (s.k === 'musicVol') { s.inp.value = cfg.musicVol; s.lab.textContent = cfg.musicVol; } }
 });
@@ -528,7 +532,7 @@ link.onevent = (k) => {
   if (k === 'fly' && !game) startGame();
   if (!game) return;
   if (k === 'reset') game.restart();
-  if (k === 'cam') { const order = ['chase', 'gunner', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % order.length]; }
+  if (k === 'cam') { const order = ['chase', 'cine', 'gunner', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % order.length]; if (game.cine) game.cine.shot = null; }
   if (k === 'pause') setPaused(!game.paused);
 };
 function loadQR() {

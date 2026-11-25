@@ -154,6 +154,15 @@
   @keyframes spPulse { 50% { opacity:.35; } }
   @media (prefers-reduced-motion: reduce) { .sp-l, .sp-name { transition:none; } #splash.down .sp-dust { animation:none; } }
 
+
+  /* ---------- cinematic camera: widescreen bars, quieter HUD ---------- */
+  #letterbox { position:fixed; inset:0; pointer-events:none; z-index:9; }
+  #letterbox i { position:absolute; left:0; right:0; height:0; background:#000; transition:height .6s cubic-bezier(.2,.9,.25,1); }
+  #letterbox i:first-child { top:0; } #letterbox i:last-child { bottom:0; }
+  body.cine #letterbox i { height:11vh; }
+  body.cine .hud-tl, body.cine .hud-br, body.cine .hint, body.cine .hud-bl { opacity:0; transition:opacity .4s; }
+  body.cine .hud-tc { top:calc(11vh + 8px); transform:translateX(-50%) scale(.85); }
+  .hud-tl, .hud-br, .hint, .hud-bl { transition:opacity .4s; }
   /* ---------- menu motion ---------- */
   .has-ind { position:relative; }
   .has-ind > .ind { position:absolute; left:0; top:0; border-radius:8px; pointer-events:none; z-index:0; opacity:0;
@@ -276,6 +285,7 @@
   <div class="sp-tap">Tap to start</div>
 </div>
 
+<div id="letterbox" aria-hidden="true"><i></i><i></i></div>
 <div id="hud" class="hidden">
   <div class="hud-tl" id="hudTL"></div>
   <div class="hud-tc"><div class="status" id="hudStatus"></div><div class="meta" id="hudMeta"></div></div>
@@ -371,7 +381,7 @@
           <div class="block">
             <h3>View</h3>
             <label class="lbl">Starting camera <span class="k">C switches in flight</span></label>
-            <div class="seg" data-key="cam"><button data-v="chase">Chase</button><button data-v="gunner">Door gunner</button><button data-v="cockpit">Nose cam</button><button data-v="pilot">From ground</button></div>
+            <div class="seg" data-key="cam"><button data-v="chase">Chase</button><button data-v="cine">Cinematic</button><button data-v="gunner">Door gunner</button><button data-v="cockpit">Nose cam</button><button data-v="pilot">From ground</button></div>
             <label class="lbl">Graphics</label>
             <div class="seg" data-key="quality"><button data-v="high">High</button><button data-v="low">Fast</button></div>
           </div>
