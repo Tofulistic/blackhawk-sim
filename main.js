@@ -14,7 +14,9 @@ import { Input } from './input.js';
 import { RotorAudio } from './audio.js';
 import { initSetup } from './setup.js';
 import { Music } from './music.js';
+import { BuiltinTrack } from './synth.js';
 import { initTouch } from './touch.js';
+import { runSplash } from './splash.js';
 import { PhoneLink, runPadPage, newCode, SITE_URL } from './phone.js';
 import { helipadTex } from './textures.js';
 import { blobShadowTex, glowTex } from './textures.js';
@@ -26,7 +28,7 @@ const _cv = new THREE.Vector3(), _cv2 = new THREE.Vector3();
 // ---------------- settings
 const CFG_KEY = 'rcbh.cfg.v1';
 const COARSE = matchMedia('(pointer: coarse)').matches;
-const DEFAULTS = { safe: 'on', touch: 'auto', musicVol: 0.6, missionMin: 5, map: 'farm', flight: 'gyro', mission: 'follow', count: '2', cam: 'chase', quality: COARSE ? 'low' : 'high',
+const DEFAULTS = { musicSrc: 'mine', safe: 'on', touch: 'auto', musicVol: 0.6, missionMin: 5, map: 'farm', flight: 'gyro', mission: 'follow', count: '2', cam: 'chase', quality: COARSE ? 'low' : 'high',
   airRate: 670, airYawRate: 500, uptilt: 20, gyroYawRate: 160, maxAngle: 38, expo: 0.35, yawExpo: 0.25, smoothMs: 30, delayMs: 0, fov: 74, camDist: 0.55, camHeight: 0.33, speed: 8, volume: 0.6 };
 let cfg = { ...DEFAULTS };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY)) || {}); } catch (e) { /* ignore */ }
@@ -57,6 +59,10 @@ renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadow
 const input = new Input();
 const audio = new RotorAudio();
 const music = new Music();
+const builtin = new BuiltinTrack();
+// which soundtrack plays during a convoy: 'mine' (your own file), 'builtin' (original synth track) or 'off'
+const activeTrack = () => (cfg.musicSrc === 'builtin' ? builtin : cfg.musicSrc === 'mine' && music.loaded ? music : null);
+const allTracks = (fn) => { fn(music); fn(builtin); };
 const link = new PhoneLink(); input.remote = link;
 let game = null;
 
@@ -67,7 +73,7 @@ class Game {
     renderer.shadowMap.enabled = hi;
     const scene = this.scene = new THREE.Scene();
     this.world = new World();
-    this.camera = new THREE.PerspectiveCamera(c.fov, innerWidth / innerHeight, 0.03, 2500);
+    this.camera = new THREE.PerspectiveCamera(c.fov, innerWidth / innerHeight, 0.06, 1600);
     this.map = (MAPS[c.map] || buildFarm)({ scene, world: this.world, quality: c.quality, renderer });
     this.world.finalize();
     // environment reflections
@@ -134,8 +140,8 @@ class Game {
     this.map.reflector?.getRenderTarget?.().setSize(Math.floor(innerWidth * 0.5), Math.floor(innerHeight * 0.5));
   }
   resetMission() {
-    this.mStart = null; this.missionLen = music.loaded ? music.duration : (+this.c.missionMin || 5) * 60;
-    this.playerDownAt = null; this.done = false; music.stop(); $('results').classList.add('hidden');
+    this.mStart = null; this.missionLen = this.c.musicSrc === 'mine' && music.loaded ? music.duration : (+this.c.missionMin || 5) * 60;
+    this.playerDownAt = null; this.done = false; allTracks((t) => t.stop()); $('results').classList.add('hidden');
   }
   missionState() {
     if (!this.convoy || this.mStart == null) return null;
@@ -270,7 +276,7 @@ class Game {
     const cv = this.convoy; if (!cv) return;
     if (this.mStart == null) {
       const air = !b.onGround && b.pos.y > this.world.groundAt(b.pos.x, b.pos.z, b.pos.y) + 0.6;
-      if ((this.mission === 'follow' && cv.started) || (this.mission === 'lead' && air)) { this.mStart = this.t; music.setVolume(+this.c.musicVol); music.play(); }
+      if ((this.mission === 'follow' && cv.started) || (this.mission === 'lead' && air)) { this.mStart = this.t; const tr = activeTrack(); if (tr) { tr.setVolume(+this.c.musicVol); tr.play(); } }
     }
     const m = this.missionState();
     if (m && this.mission === 'lead' && cv.phase === 'route' && m.timeLeft < 45) cv.phase = 'rtb';
@@ -285,8 +291,8 @@ class Game {
   }
   songLine() {
     const m = this.missionState(); const fmt = (x) => { x = Math.max(0, Math.round(x)); return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`; };
-    if (!m) return `♪ ${music.loaded ? music.name.slice(0, 18) : 'Mission'} ${fmt(this.missionLen)}`;
-    return `♪ ${fmt(m.timeLeft)} left`;
+    if (!m) return `${this.c.musicSrc === 'mine' && music.loaded ? music.name.slice(0, 18) : 'Mission'} ${fmt(this.missionLen)}`;
+    return `${fmt(m.timeLeft)} left`;
   }
   showResults() {
     const cv = this.convoy; const f = this.mission === 'follow';
@@ -312,6 +318,7 @@ class Game {
   updateCamera(dt, instant = false) {
     const cam = this.camera, b = this.body;
     if (this.camMode === 'debug') return;
+    cam.near = this.camMode === 'cockpit' ? 0.012 : 0.06;
     if (this.camMode === 'chase') {
       const target = this.heading();
       let d = target - this.camYaw; d = Math.atan2(Math.sin(d), Math.cos(d));
@@ -333,6 +340,12 @@ class Game {
       this.camRoll = instant ? rollT : this.camRoll + (rollT - this.camRoll) * (1 - Math.exp(-dt * 4));
       cam.rotateZ(this.camRoll);
       cam.fov = +this.c.fov;
+    } else if (this.camMode === 'gunner') {
+      // sitting behind the door gun: your own fuselage, rotor and gun in frame, convoy out ahead
+      const sd = this.gunSide || 1;
+      cam.position.copy(b.pos).add(_cv.set(sd * 0.07, 0.032, -0.122).applyQuaternion(b.q)); // just behind and above the door gun, ahead of the stub wing
+      cam.quaternion.copy(b.q).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.2, -sd * 0.32, 0, 'YXZ')));
+      cam.fov = 82; cam.near = 0.008;
     } else if (this.camMode === 'cockpit') {
       cam.position.copy(b.pos).add(new V3(0, 0.035, -0.24).applyQuaternion(b.q));
       const tilt = this.c.flight === 'air' ? THREE.MathUtils.degToRad(+this.c.uptilt) : -0.12;
@@ -407,11 +420,11 @@ function syncSeg() {
   document.querySelectorAll('.seg[data-key]').forEach((seg) => {
     const k = seg.dataset.key;
     seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', String(cfg[k]) === b.dataset.v));
-    if (k === 'count') seg.closest('.row').style.opacity = cfg.mission === 'free' ? 0.4 : 1;
+
   });
 }
 document.querySelectorAll('.seg[data-key]').forEach((seg) => seg.addEventListener('click', (e) => {
-  const b = e.target.closest('button'); if (!b) return; cfg[seg.dataset.key] = b.dataset.v; saveCfg(); syncSeg();
+  const b = e.target.closest('button'); if (!b) return; cfg[seg.dataset.key] = b.dataset.v; saveCfg(); syncSeg(); if (seg.dataset.key === 'musicSrc') musicUI(); describe();
 }));
 const sliderEls = [];
 function buildSliders(el, list) {
@@ -420,7 +433,7 @@ function buildSliders(el, list) {
     w.innerHTML = `<label><span>${name}</span><span>${cfg[k]}</span></label><input type="range" min="${min}" max="${max}" step="${step}" value="${cfg[k]}">`;
     w.querySelector('input').oninput = (e) => {
       cfg[k] = +e.target.value; saveCfg(); if (game) game.c[k] = cfg[k];
-      if (k === 'musicVol') music.setVolume(cfg[k]); if (k === 'missionMin') musicUI();
+      if (k === 'musicVol') allTracks((t) => t.setVolume(cfg[k])); if (k === 'missionMin') musicUI();
       for (const s of sliderEls) if (s.k === k) { s.inp.value = cfg[k]; s.lab.textContent = cfg[k]; }
     };
     sliderEls.push({ k, inp: w.querySelector('input'), lab: w.querySelector('label span:last-child') });
@@ -430,12 +443,34 @@ function buildSliders(el, list) {
 buildSliders($('inputSliders'), INPUT_SLIDERS); buildSliders($('sliders'), SLIDERS); buildSliders($('pauseSliders'), [['musicVol', 'Music volume (M to mute)', 0, 1, 0.05], ...INPUT_SLIDERS]); buildSliders($('musicSliders'), [['musicVol', 'Music volume (M to mute)', 0, 1, 0.05]]);
 syncSeg();
 
+// one-line explanations under the main choices, and a summary next to Fly
+const DESC = {
+  mission: { follow: 'Fly in formation behind the AI convoy. Stay inside the green ring to score; they land with you when the song ends.', lead: 'You lead. Your escorts follow your exact path and land beside you at the end.', free: 'No convoy, no timer. Just fly.' },
+  flight: { gyro: 'Levels itself and holds height when you centre the stick. Best for first flights and for friends.', air: 'Full acro like an FPV drone: it holds any angle and can flip. Hovers at about 30% throttle.' },
+};
+const MAP_LABEL = { farm: 'Farm', yard: 'Container Yard', desert: 'Desert Base', forest: 'Forest River', beach: 'Beach' };
+function describe() {
+  $('descMission').textContent = DESC.mission[cfg.mission] || '';
+  $('descFlight').textContent = DESC.flight[cfg.flight] || '';
+  const conv = cfg.mission === 'free' ? 'solo' : `${cfg.count} heli${cfg.count > 1 ? 's' : ''}`;
+  $('flySummary').textContent = `${MAP_LABEL[cfg.map] || ''} · ${conv} · ${cfg.flight === 'air' ? 'Air mode' : 'Angle mode'}`;
+}
+// option tabs
+function showTab(t) {
+  document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  document.querySelectorAll('.pane[data-pane]').forEach((p) => p.classList.toggle('active', p.dataset.pane === t));
+  cfg.tab = t; saveCfg();
+}
+document.querySelectorAll('.tabs [data-tab]').forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
+showTab(cfg.tab || 'controls');
+describe();
+
 const setup = initSetup(input, () => { if (game) { $('pause').classList.remove('hidden'); } else $('menu').classList.remove('hidden'); });
 $('btnSetup').onclick = () => { $('menu').classList.add('hidden'); setup.open(); };
 $('btnPauseSetup').onclick = () => { $('pause').classList.add('hidden'); setup.open(); };
 
 const touch = initTouch(input, {
-  onCam: () => { if (game) { const order = ['chase', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % 3]; } },
+  onCam: () => { if (game) { const order = ['chase', 'gunner', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % order.length]; } },
   onPause: () => setPaused(true),
 });
 const wantTouch = () => cfg.touch === 'on' || (cfg.touch === 'auto' && COARSE);
@@ -444,7 +479,7 @@ function startGame() {
   setTimeout(() => {
     try {
       if (game) { game.dispose(); game = null; }
-      music.stop();
+      allTracks((t) => t.stop());
       game = new Game({ ...cfg });
       $('menu').classList.add('hidden'); $('hud').classList.remove('hidden'); $('loadMsg').textContent = '';
       touch.show(wantTouch());
@@ -455,9 +490,9 @@ function startGame() {
 $('btnFly').onclick = startGame;
 function setPaused(p) {
   if (!game) return; game.paused = p; $('pause').classList.toggle('hidden', !p);
-  if (p) { audio.mute(); music.pause(); } else music.resume();
+  if (p) { audio.mute(); allTracks((t) => t.pause()); } else allTracks((t) => t.resume());
 }
-function toMenu() { setPaused(false); music.stop(); game.dispose(); game = null; audio.mute(); touch.show(false); $('results').classList.add('hidden'); $('hud').classList.add('hidden'); $('menu').classList.remove('hidden'); }
+function toMenu() { setPaused(false); allTracks((t) => t.stop()); game.dispose(); game = null; audio.mute(); touch.show(false); $('results').classList.add('hidden'); $('hud').classList.add('hidden'); $('menu').classList.remove('hidden'); }
 $('btnResume').onclick = () => setPaused(false);
 $('btnRestart').onclick = () => { game.restart(); setPaused(false); };
 $('btnQuit').onclick = toMenu;
@@ -465,8 +500,9 @@ $('btnAgain').onclick = () => { game.restart(); };
 $('btnResMenu').onclick = toMenu;
 addEventListener('keydown', (e) => {
   if (e.code === 'Escape' && game && $('setup').classList.contains('hidden')) setPaused(!game.paused);
-  if (e.code === 'KeyC' && game) { const order = ['chase', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % 3]; }
-  if (e.code === 'KeyM') { cfg.musicVol = cfg.musicVol > 0 ? 0 : 0.6; music.setVolume(cfg.musicVol); saveCfg(); for (const s of sliderEls) if (s.k === 'musicVol') { s.inp.value = cfg.musicVol; s.lab.textContent = cfg.musicVol; } }
+  if (e.code === 'KeyC' && game) { const order = ['chase', 'gunner', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % order.length]; }
+  if (e.code === 'KeyV' && game) game.gunSide = -(game.gunSide || 1);
+  if (e.code === 'KeyM') { cfg.musicVol = cfg.musicVol > 0 ? 0 : 0.6; allTracks((t) => t.setVolume(cfg.musicVol)); saveCfg(); for (const s of sliderEls) if (s.k === 'musicVol') { s.inp.value = cfg.musicVol; s.lab.textContent = cfg.musicVol; } }
 });
 addEventListener('resize', () => game?.resize());
 
@@ -482,7 +518,7 @@ link.onevent = (k) => {
   if (k === 'fly' && !game) startGame();
   if (!game) return;
   if (k === 'reset') game.restart();
-  if (k === 'cam') { const order = ['chase', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % 3]; }
+  if (k === 'cam') { const order = ['chase', 'gunner', 'cockpit', 'pilot']; game.camMode = order[(order.indexOf(game.camMode) + 1) % order.length]; }
   if (k === 'pause') setPaused(!game.paused);
 };
 function loadQR() {
@@ -512,8 +548,13 @@ $('btnPhone').onclick = async () => {
 
 // soundtrack picker
 function musicUI() {
-  $('musicName').textContent = music.loaded ? `${music.name} (${Math.floor(music.duration / 60)}:${String(Math.round(music.duration % 60)).padStart(2, '0')}) · convoy lasts the whole song` : `No song loaded · convoy lasts ${cfg.missionMin} min`;
+  const len = (x) => `${Math.floor(x / 60)}:${String(Math.round(x % 60)).padStart(2, '0')}`;
+  const src = cfg.musicSrc;
+  $('musicName').textContent = src === 'off' ? `No music · convoy lasts ${cfg.missionMin} min`
+    : src === 'builtin' ? `Original built-in track · convoy lasts ${cfg.missionMin} min`
+    : music.loaded ? `${music.name} (${len(music.duration)}) · the convoy lasts the whole song` : `No song chosen yet · convoy lasts ${cfg.missionMin} min`;
   $('btnMusicClear').classList.toggle('hidden', !music.loaded);
+  $('songPick').classList.toggle('hidden', src !== 'mine');
 }
 music.onchange = musicUI; musicUI();
 $('btnMusic').onclick = () => $('musicFile').click();
@@ -525,13 +566,14 @@ $('btnFull').onclick = () => { const d = document.documentElement; (d.requestFul
 function padStatus() {
   const p = input.pad();
   $('padDot').classList.toggle('ok', !!p);
-  $('padText').textContent = p ? `Controller: ${p.id}` : (COARSE ? 'Phone detected: on-screen sticks appear when you fly.' : 'No controller detected. Pair “ExpressLRS Joystick”, then move a stick.');
+  $('padText').textContent = p ? `Controller: ${p.id.replace(/\s*\(.*$/, '')}` : (COARSE ? 'Touch controls ready' : 'Keyboard ready · no radio detected');
 }
 addEventListener('gamepadconnected', padStatus); addEventListener('gamepaddisconnected', padStatus);
 
 // phone opened with #pad-<code>: become the controller instead of the sim
 const padMatch = /^#pad(?:-([a-z0-9]{4,6}))?$/.exec(location.hash);
 if (padMatch) runPadPage(padMatch[1] || '', input, touch);
+else runSplash();
 setInterval(() => { if (!game && link.status === 'connected') link.tell({ flying: false }); }, 1000);
 
 let last = performance.now();

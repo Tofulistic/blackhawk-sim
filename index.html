@@ -34,23 +34,23 @@
     backdrop-filter: blur(10px); box-shadow:0 30px 80px rgba(0,0,0,.5); max-height:calc(100vh - 40px); overflow:auto; }
   .brand { display:flex; align-items:baseline; gap:12px; margin-bottom:4px; }
   .brand h1 { margin:0; font-size:40px; line-height:1; font-weight:700; }
-  .brand .tag { color:var(--accent); font-family:'Barlow Condensed'; font-weight:600; letter-spacing:.12em; font-size:14px; }
+  .brand .tag { color:var(--accent); font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight:600; letter-spacing:.12em; font-size:14px; }
   .sub { color:var(--dim); margin:0 0 18px; font-size:14px; }
   .row { display:grid; grid-template-columns: 130px 1fr; align-items:center; gap:12px; padding:9px 0; border-top:1px solid var(--line); }
-  .row > label { color:var(--dim); font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:.08em; font-size:14px; }
+  .row > label { color:var(--dim); font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; text-transform:uppercase; letter-spacing:.08em; font-size:14px; }
   .seg { display:flex; flex-wrap:wrap; gap:6px; }
   .seg button { flex:1 1 auto; min-width:70px; }
   button { font:inherit; color:var(--ink); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:8px; padding:9px 12px; cursor:pointer; transition:background .15s, border-color .15s; }
   button:hover { background:rgba(255,255,255,.12); }
   button.on { background:rgba(215,178,58,.18); border-color:var(--accent); color:#fff; }
-  button.primary { background:var(--accent); color:#16160f; border-color:var(--accent); font-family:'Barlow Condensed'; font-weight:700; font-size:22px; letter-spacing:.12em; padding:12px 34px; }
+  button.primary { background:var(--accent); color:#16160f; border-color:var(--accent); font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight:700; font-size:22px; letter-spacing:.12em; padding:12px 34px; }
   button.primary:hover { filter:brightness(1.08); }
   .actions { display:flex; gap:10px; align-items:center; margin-top:18px; flex-wrap:wrap; }
   .pad-status { display:flex; align-items:center; gap:8px; font-size:14px; color:var(--dim); margin-bottom:6px; }
   .dot { width:9px; height:9px; border-radius:50%; background:#555; flex:none; }
   .dot.ok { background:var(--ok); box-shadow:0 0 8px var(--ok); }
   details { margin-top:14px; border-top:1px solid var(--line); padding-top:10px; }
-  summary { cursor:pointer; color:var(--dim); font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:.08em; }
+  summary { cursor:pointer; color:var(--dim); font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; text-transform:uppercase; letter-spacing:.08em; }
   .help { font-size:14px; line-height:1.55; color:#cfd2c6; }
   .help ol { padding-left:20px; margin:8px 0; }
   .sliders { display:grid; grid-template-columns: 1fr 1fr; gap:6px 22px; margin-top:8px; }
@@ -97,7 +97,7 @@
   #edgeArrow { position:absolute; width:0; height:0; border-left:12px solid transparent; border-right:12px solid transparent; border-bottom:24px solid var(--ok); filter:drop-shadow(0 0 4px rgba(0,0,0,.8)); }
   .hint { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); font-size:13px; color:rgba(255,255,255,.55); }
   .resbody div { display:flex; justify-content:space-between; padding:7px 2px; border-top:1px solid var(--line); font-size:15px; }
-  .resbody b { font-family:'Barlow Condensed'; font-size:20px; }
+  .resbody b { font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; font-size:20px; }
   .resbody .tot b { color:var(--accent); font-size:26px; }
   #results { background:rgba(5,6,4,.55); }
   /* touch sticks */
@@ -105,9 +105,9 @@
   .qr { background:#fff; padding:8px; border-radius:8px; width:156px; height:156px; flex:none; }
   .qr svg { width:140px; height:140px; display:block; }
   .plink { font-size:12px; word-break:break-all; color:#cfd2c6; user-select:all; }
-  .pcode { font-family:'Barlow Condensed'; font-size:40px; letter-spacing:.3em; color:var(--accent); line-height:1; }
+  .pcode { font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; font-size:40px; letter-spacing:.3em; color:var(--accent); line-height:1; }
   #padui { position:fixed; left:0; right:0; top:0; z-index:15; padding:10px 14px; background:linear-gradient(rgba(10,12,8,.95), rgba(10,12,8,.7)); }
-  .padtitle { font-family:'Barlow Condensed'; letter-spacing:.06em; text-transform:uppercase; font-size:16px; margin-bottom:6px; }
+  .padtitle { font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing:.06em; text-transform:uppercase; font-size:16px; margin-bottom:6px; }
   .padrow { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .padrow input { width:90px; font:inherit; font-size:18px; letter-spacing:.2em; text-transform:lowercase; padding:7px 10px; border-radius:8px; border:1px solid var(--line); background:rgba(255,255,255,.08); color:var(--ink); }
   body.padpage { background:radial-gradient(ellipse at 50% 60%, #22261c, #0b0c0a); }
@@ -120,19 +120,134 @@
   .tz.l .tbase { left:22%; top:62%; } .tz.r .tbase { left:78%; top:62%; }
   .tbase.live { border-color:rgba(215,178,58,.8); }
   .tknob { position:absolute; left:50%; top:50%; width:62px; height:62px; border-radius:50%; background:rgba(215,178,58,.85); transform:translate(-50%,-50%); box-shadow:0 0 12px rgba(0,0,0,.5); }
-  .tlab { position:absolute; bottom:8px; width:100%; text-align:center; font-family:'Barlow Condensed'; letter-spacing:.1em; font-size:12px; color:rgba(255,255,255,.45); }
+  .tlab { position:absolute; bottom:8px; width:100%; text-align:center; font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing:.1em; font-size:12px; color:rgba(255,255,255,.45); }
   .tbtns { position:absolute; top:88px; right:12px; display:flex; flex-direction:row; gap:6px; pointer-events:auto; }
-  .tbtns button { padding:8px 12px; font-family:'Barlow Condensed'; letter-spacing:.08em; background:rgba(0,0,0,.45); min-width:76px; }
+  .tbtns button { padding:8px 12px; font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing:.08em; background:rgba(0,0,0,.45); min-width:76px; }
   .tbtns button.on { background:var(--bad); border-color:var(--bad); }
   body.touchmode .hud-br, body.touchmode .hint { display:none; }
   body.touchmode .hud-bl { bottom:auto; top:96px; left:14px; transform:scale(.8); transform-origin:left top; }
   body.touchmode .hud-tl { font-size:12px; }
   @media (max-height:500px) { .hud-tc .status { font-size:22px; } .hud-tc .meta { font-size:12px; } .center-msg { font-size:28px; } .tbase { width:120px; height:120px; margin:-60px 0 0 -60px; } }
+
+
+  /* ---------- opening sequence ---------- */
+  #splash { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; flex-direction:column; cursor:pointer;
+    background:radial-gradient(70% 60% at 50% 62%, #262a1e, #0b0c0a 75%); transition:opacity .6s ease, filter .6s ease; touch-action:manipulation; }
+  #splash svg { width:min(92vw, 820px); max-height:82vh; overflow:visible; }
+  #splash.out { opacity:0; filter:blur(6px); pointer-events:none; }
+  .sp-l { fill:var(--ink); opacity:.16; transform:translateY(10px); transform-box:fill-box; transition:opacity .35s ease-out, transform .45s cubic-bezier(.2,.9,.25,1), fill .35s ease-out; }
+  .sp-l.on { opacity:1; transform:none; fill:#f3eedb; }
+  #spH.on { fill:var(--accent); }
+  .sp-name { fill:var(--dim); opacity:0; transition:opacity 1.1s ease-out, letter-spacing 1.4s cubic-bezier(.2,.9,.25,1); }
+  #splash.named .sp-name { opacity:1; letter-spacing:11px; }
+  .sp-heli { transform:translate(-60px,-330px) rotate(-7deg); transform-origin:300px 300px; transform-box:view-box; }
+  #splash:not(.go) .sp-heli { opacity:0; }
+  .sp-rotor { transform-origin:300px 221px; transform-box:view-box; }
+  .sp-dust { opacity:0; transform-origin:300px 330px; transform-box:view-box; }
+  #splash.down .sp-dust { animation:spDust 1.1s cubic-bezier(.15,.8,.3,1) forwards; }
+  @keyframes spDust { 0% { opacity:.55; transform:scale(.6,1); } 100% { opacity:0; transform:scale(2.4,1.6); } }
+  .sp-lights circle { opacity:.25; transition:opacity .25s; }
+  #splash.down .sp-lights circle { opacity:1; filter:drop-shadow(0 0 4px #ffcf5a); }
+  .sp-halo { opacity:0; transition:opacity .8s; } #splash.down .sp-halo { opacity:1; }
+  .sp-tap { margin-top:6px; font-family:'Barlow Condensed','Arial Narrow',sans-serif; letter-spacing:.3em; text-transform:uppercase; font-size:15px; color:var(--dim); animation:spPulse 1.8s ease-in-out infinite; }
+  #splash.go .sp-tap { opacity:0; animation:none; transition:opacity .3s; }
+  @keyframes spPulse { 50% { opacity:.35; } }
+  @media (prefers-reduced-motion: reduce) { .sp-l, .sp-name { transition:none; } #splash.down .sp-dust { animation:none; } }
+  /* ---------- main menu ---------- */
+  .menu { align-items:flex-start; padding:clamp(12px,3vh,36px) 16px; background:radial-gradient(120% 90% at 30% 0%, rgba(52,58,40,.6), rgba(6,7,5,.94)); }
+  .shell { width:min(1120px,100%); margin:auto; min-width:0; }
+  .menu .shell * { min-width:0; }
+  .mhead { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:18px; }
+  .mhead h1 { margin:0; font-size:clamp(34px,5vw,52px); font-weight:700; line-height:.95; letter-spacing:.02em; }
+  .lede { margin:4px 0 0; color:var(--accent); font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing:.14em; text-transform:uppercase; font-size:15px; }
+  .chip { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--line); border-radius:999px; font-size:13px; color:#cfd2c6; background:rgba(255,255,255,.03); max-width:46ch; }
+  .mgrid { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(0,1fr); gap:18px; align-items:start; }
+  .plan, .side { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px 22px 22px; box-shadow:0 18px 50px rgba(0,0,0,.45); }
+  .plan h2 { font-size:15px; letter-spacing:.12em; color:var(--dim); margin:18px 0 9px; font-weight:600; }
+  .plan h2:first-child { margin-top:0; }
+  .maps { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+  .maps .tile { display:flex; flex-direction:column; align-items:flex-start; gap:1px; padding:0 0 9px; overflow:hidden; text-align:left; min-width:0; }
+  .tile::before { content:''; display:block; width:100%; aspect-ratio:16/10; background:var(--pv); margin-bottom:8px; border-bottom:1px solid var(--line); }
+  .tile .tn { padding:0 10px; font-weight:600; font-size:14px; line-height:1.15; }
+  .tile .tt { padding:0 10px; font-size:12px; color:var(--dim); }
+  .tile.on { box-shadow:0 0 0 2px var(--accent) inset; }
+  .desc { margin:8px 2px 0; font-size:14px; line-height:1.45; color:#cfd2c6; min-height:2.9em; max-width:62ch; }
+  .go { display:flex; align-items:center; gap:16px; margin-top:22px; padding-top:18px; border-top:1px solid var(--line); flex-wrap:wrap; }
+  .go .primary { font-size:26px; padding:13px 52px; }
+  .gomsg { display:flex; flex-direction:column; gap:2px; font-size:14px; color:var(--dim); }
+  .err { color:var(--bad); }
+  .tabs { display:flex; gap:2px; border-bottom:1px solid var(--line); margin:-6px -6px 14px; }
+  .tabs button { background:none; border:0; border-radius:8px 8px 0 0; padding:10px 12px 9px; color:var(--dim); font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing:.08em; text-transform:uppercase; font-size:15px; border-bottom:2px solid transparent; margin-bottom:-1px; flex:1; }
+  .tabs button:hover { color:var(--ink); background:rgba(255,255,255,.04); }
+  .tabs button[aria-selected=true] { color:var(--ink); border-bottom-color:var(--accent); }
+  .pane { display:none; }
+  .pane.active { display:block; }
+  .block { padding:2px 0 16px; margin-bottom:14px; border-bottom:1px solid var(--line); }
+  .block h3 { margin:0 0 6px; font-size:17px; letter-spacing:.06em; }
+  .note { margin:0 0 10px; font-size:13.5px; line-height:1.45; color:#bfc3b5; }
+  .note.strong { color:var(--ink); margin-top:10px; }
+  .note.hint { font-size:12px; color:var(--dim); }
+  .lbl { display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--dim); margin:12px 0 6px; }
+  .lbl .k { font-size:12px; opacity:.85; }
+  .songpick { display:flex; gap:8px; margin-top:10px; }
+  .sliders.one { grid-template-columns:1fr; margin-top:6px; }
+  button.small { padding:5px 10px; font-size:13px; margin:6px 0 10px; }
+  button.ghost { background:none; }
+  .side details { border-top:0; margin-top:4px; padding-top:4px; }
+  .help ol { padding-left:20px; margin:8px 0 12px; font-size:14px; line-height:1.55; color:#cfd2c6; }
+  .help p { font-size:14px; color:#cfd2c6; margin:6px 0 10px; }
+  .keys { display:grid; grid-template-columns:auto 1fr; gap:6px 14px; font-size:14px; margin:10px 0; }
+  .keys dt { color:var(--dim); white-space:nowrap; } .keys dd { margin:0; }
+  .phonebox { flex-wrap:wrap; }
+  .pinfo { min-width:0; flex:1; }
+  .seg button { min-width:0; }
+  button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  ::selection { background:rgba(215,178,58,.35); }
+  .menu ::-webkit-scrollbar { width:10px; } .menu ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.12); border-radius:6px; }
+  @media (max-width:900px) { .mgrid { grid-template-columns:minmax(0,1fr); } .maps { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  @media (max-width:520px) { .maps { grid-template-columns:repeat(2,minmax(0,1fr)); } .mhead { flex-direction:column; align-items:flex-start; } .go .primary { width:100%; } }
+  @media (max-height:500px) and (orientation:landscape) { .maps { grid-template-columns:repeat(5,minmax(0,1fr)); } .tile::before { aspect-ratio:16/7; } .mgrid { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); } }
   @media (max-width:640px) { .row { grid-template-columns: 1fr; } .map-row { grid-template-columns: 1fr 1fr; } .hud-br { display:none; } }
 </style>
 </head>
 <body>
 <canvas id="view"></canvas>
+
+<div id="splash" class="hidden" role="dialog" aria-label="Black Hawk Sim">
+  <svg viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <defs>
+      <radialGradient id="spGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#d7b23a" stop-opacity=".35"/><stop offset="1" stop-color="#d7b23a" stop-opacity="0"/></radialGradient>
+    </defs>
+    <g class="sp-logo" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="700" text-anchor="middle">
+      <text id="spB" class="sp-l" x="218" y="132" font-size="112">B</text>
+      <text id="spH" class="sp-l" x="300" y="132" font-size="112">H</text>
+      <text id="spS" class="sp-l" x="382" y="132" font-size="112">S</text>
+      <text class="sp-name" x="300" y="172" font-size="22" letter-spacing="9">BLACK HAWK SIM</text>
+    </g>
+    <ellipse class="sp-halo" cx="300" cy="336" rx="200" ry="40" fill="url(#spGlow)"/>
+    <g class="sp-pad">
+      <ellipse cx="300" cy="336" rx="150" ry="24" fill="#2a2d25" stroke="#4a4e40" stroke-width="2"/>
+      <ellipse cx="300" cy="336" rx="112" ry="17" fill="none" stroke="#e9e4d0" stroke-opacity=".75" stroke-width="3"/>
+      <g fill="#e9e4d0" fill-opacity=".85"><rect x="274" y="327" width="9" height="18"/><rect x="317" y="327" width="9" height="18"/><rect x="274" y="333" width="52" height="6"/></g>
+      <g class="sp-lights" fill="#ffcf5a"><circle cx="152" cy="336" r="3"/><circle cx="448" cy="336" r="3"/><circle cx="196" cy="320" r="3"/><circle cx="404" cy="320" r="3"/><circle cx="196" cy="352" r="3"/><circle cx="404" cy="352" r="3"/><circle cx="300" cy="312" r="3"/><circle cx="300" cy="360" r="3"/></g>
+    </g>
+    <g class="sp-dust" fill="#cfc6a8"><ellipse cx="228" cy="330" rx="34" ry="7"/><ellipse cx="372" cy="330" rx="34" ry="7"/></g>
+    <g id="spHeli" class="sp-heli">
+      <g fill="#d7b23a">
+        <path d="M172 292 C172 270 190 258 214 254 L250 249 L264 238 L332 236 L348 246 L364 251 L384 262 L472 268 L512 252 L528 254 L520 282 L470 286 L384 292 L352 304 L204 306 C186 306 172 302 172 292 Z"/>
+        <path d="M506 284 L520 230 L538 226 L530 262 Z"/>
+        <rect x="292" y="224" width="12" height="14" rx="2"/>
+        <rect x="470" y="262" width="46" height="5" rx="2"/>
+      </g>
+      <g fill="#14160f"><path d="M186 278 C188 266 200 259 216 257 L236 256 L230 278 Z"/><rect x="246" y="262" width="22" height="14" rx="2"/><rect x="286" y="262" width="34" height="18" rx="2"/></g>
+      <g id="spRotor" class="sp-rotor"><rect x="140" y="219" width="320" height="5" rx="2.5" fill="#e9e4d0"/></g>
+      <circle cx="532" cy="240" r="15" fill="none" stroke="#e9e4d0" stroke-opacity=".55" stroke-width="3"/>
+      <g stroke="#d7b23a" stroke-width="4"><line x1="222" y1="304" x2="218" y2="320"/><line x1="300" y1="305" x2="306" y2="320"/><line x1="466" y1="286" x2="470" y2="318"/></g>
+      <g fill="#14160f" stroke="#d7b23a" stroke-width="3"><circle cx="218" cy="322" r="8"/><circle cx="306" cy="322" r="8"/><circle cx="470" cy="320" r="6"/></g>
+    </g>
+  </svg>
+  <div class="sp-tap">Tap to start</div>
+</div>
 
 <div id="hud" class="hidden">
   <div class="hud-tl" id="hudTL"></div>
@@ -151,89 +266,142 @@
   <div class="hint" id="hint">Esc menu · R reset · C camera</div>
 </div>
 
-<div id="menu" class="overlay">
-  <div class="panel">
-    <div class="brand"><h1>RC Black Hawk</h1><span class="tag">Convoy Sim</span></div>
-    <p class="sub">Scale RC helicopter sim for your RadioMaster Pocket over Bluetooth (ELRS BLE Joystick) or USB.</p>
-    <div class="pad-status"><span class="dot" id="padDot"></span><span id="padText">No controller detected. Move a stick after pairing.</span></div>
-    <div class="row"><label>Map</label><div class="seg" data-key="map">
-      <button data-v="farm">Farm · Sunset</button><button data-v="yard">Container Yard · Night</button>
-      <button data-v="desert">Desert FOB · Afternoon</button><button data-v="forest">Forest River · Morning mist</button><button data-v="beach">Beach · Sunrise</button></div></div>
-    <div class="row"><label>Flight mode</label><div class="seg" data-key="flight">
-      <button data-v="gyro">Angle / Gyro (self-level) · beginners</button><button data-v="air">Air mode (FPV acro)</button></div></div>
-    <div class="row"><label>Mission</label><div class="seg" data-key="mission">
-      <button data-v="follow">Follow the convoy</button><button data-v="lead">Lead the convoy</button><button data-v="free">Free flight</button></div></div>
-    <div class="row"><label>Convoy contact</label><div class="seg" data-key="safe">
-      <button data-v="on">Can't hit them · convoy matches your speed</button><button data-v="off">Real collisions (crash)</button></div></div>
-    <div class="row"><label>Convoy size</label><div class="seg" data-key="count">
-      <button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button></div></div>
-    <div class="row"><label>Camera</label><div class="seg" data-key="cam">
-      <button data-v="chase">Chase (video style)</button><button data-v="cockpit">FPV (nose cam)</button><button data-v="pilot">Pilot on ground</button></div></div>
-    <div class="row"><label>Phone controller</label><div>
-      <div class="seg"><button id="btnPhone">Use a phone as the controller</button></div>
-      <div id="phoneBox" class="phonebox hidden">
-        <div id="qr" class="qr"></div>
-        <div>
-          <div class="sub" style="margin:0 0 4px">On the phone, scan the code or open this link in Chrome or Safari (no app needed):</div>
-          <div class="plink" id="phoneLink"></div>
-          <button id="btnCopyLink" style="margin-top:6px;padding:5px 10px;font-size:13px">Copy link</button>
-          <div class="sub" style="margin:6px 0 0;font-size:12px">Works best with the phone and laptop on the same Wi-Fi.</div>
-          <div class="sub" style="margin:8px 0 2px">or enter this code on the phone:</div>
-          <div class="pcode" id="phoneCode"></div>
-          <div class="pad-status" style="margin-top:8px"><span class="dot" id="phoneDot"></span><span id="phoneStatus"></span></div>
+<div id="menu" class="overlay menu">
+  <div class="shell">
+    <header class="mhead">
+      <div class="title"><h1>RC Black Hawk</h1><p class="lede">Convoy flight sim</p></div>
+      <div class="chip" role="status"><span class="dot" id="padDot"></span><span id="padText">Keyboard ready</span></div>
+    </header>
+    <div class="mgrid">
+      <section class="plan" aria-label="Flight plan">
+        <h2>Map</h2>
+        <div class="maps seg" data-key="map" role="radiogroup" aria-label="Map">
+          <button data-v="farm" class="tile" style="--pv:linear-gradient(180deg,#6f86b6 0%,#d99a8f 38%,#f3b878 52%,#8a7a45 53%,#5d5530 100%)"><span class="tn">Farm</span><span class="tt">Sunset</span></button>
+          <button data-v="yard" class="tile" style="--pv:radial-gradient(circle at 70% 42%,#ffe9c2 0 3%,transparent 4%),linear-gradient(180deg,#05070d 0%,#1d1a22 40%,#4a3020 52%,#2b2c30 53%,#1a1b1e 100%)"><span class="tn">Container Yard</span><span class="tt">Night</span></button>
+          <button data-v="desert" class="tile" style="--pv:linear-gradient(180deg,#4f86c0 0%,#a9c3da 34%,#f2cf9c 50%,#d9b98a 51%,#b8946a 100%)"><span class="tn">Desert Base</span><span class="tt">Afternoon</span></button>
+          <button data-v="forest" class="tile" style="--pv:linear-gradient(180deg,#7aa4cc 0%,#cfd8d8 42%,#e8dccb 50%,#4d6a3c 51%,#2f4a2a 100%)"><span class="tn">Forest River</span><span class="tt">Morning mist</span></button>
+          <button data-v="beach" class="tile" style="--pv:radial-gradient(circle at 78% 49%,#fff1cc 0 3%,transparent 4%),linear-gradient(180deg,#6a8ec2 0%,#e3b2ac 36%,#ffa868 50%,#1f5c74 51%,#123f52 100%)"><span class="tn">Beach</span><span class="tt">Sunrise</span></button>
         </div>
-      </div>
-    </div></div>
-    <div class="row"><label>Phone sticks</label><div class="seg" data-key="touch">
-      <button data-v="auto">Auto (on for phones)</button><button data-v="on">Always on</button><button data-v="off">Off</button></div></div>
-    <div class="row"><label>Convoy song</label><div>
-      <div class="seg"><button id="btnMusic">Choose song…</button><button id="btnMusicClear" class="hidden">Remove</button></div>
-      <div class="sub" id="musicName" style="margin:6px 0 0"></div>
-      <div class="sliders" id="musicSliders" style="grid-template-columns:1fr;margin-top:4px"></div>
-      <input type="file" id="musicFile" accept="audio/*" class="hidden">
-    </div></div>
-    <div class="row"><label>Graphics</label><div class="seg" data-key="quality">
-      <button data-v="high">High (reflections, shadows)</button><button data-v="low">Low (faster)</button></div></div>
-    <details open>
-      <summary>Rates &amp; input (expo, smoothing, delay)</summary>
-      <div class="sliders" id="inputSliders"></div>
-    </details>
-    <details>
-      <summary>Camera, convoy &amp; sound</summary>
-      <div class="sliders" id="sliders"></div>
-    </details>
-    <details>
-      <summary>How to connect the Pocket over Bluetooth</summary>
-      <div class="help">
-        <ol>
-          <li>On the Pocket, make or pick a sim model with the <b>internal module set to CRSF / ExpressLRS</b>.</li>
-          <li>Press <b>SYS</b>, open the <b>ExpressLRS</b> tool, scroll to <b>[BLE Joystick]</b> and press Enter.</li>
-          <li>On your computer, pair <b>“ExpressLRS Joystick”</b> in Bluetooth settings.</li>
-          <li>Come back here, move a stick, then open <b>Controller setup</b> to map your sticks and arm switch.</li>
-        </ol>
-        Use Chrome or Edge. A USB cable in joystick mode works too. No radio? Keyboard: <kbd>W</kbd>/<kbd>S</kbd> throttle, <kbd>A</kbd>/<kbd>D</kbd> yaw, arrows pitch/roll, <kbd>Space</kbd> arm, <kbd>R</kbd> reset.
-      </div>
-    </details>
-    <details>
-      <summary>Let a friend fly with their phone</summary>
-      <div class="help">
-        <p style="margin:6px 0"><b>Phone as the controller, game on this laptop (nothing to install):</b></p>
-        <ol>
-          <li>Here on the laptop, click <b>Use a phone as the controller</b>. A QR code and a 4-letter code appear.</li>
-          <li>Scan the QR code with the phone's camera and open it in Chrome or Safari, or open this site on the phone and add <code>#pad</code> to the address, then type the code.</li>
-          <li>The phone turns into a gamepad. Turn it sideways, pick <b>Angle (easy)</b> (recommended) or <b>Air (acro)</b>, then tap <b>FLY</b>.</li>
-          <li>Left thumb: up/down = climb/descend, left/right = turn. Right thumb: tilt. Let go and the stick re-centres; in Angle mode the heli then holds its height.</li>
-          <li>Keep both on the same Wi-Fi for the least lag. If the signal drops, the heli just hovers until it reconnects.</li>
-        </ol>
-        <p style="margin:6px 0"><b>Or play on the phone itself:</b> open this site on the phone and on-screen sticks appear automatically.</p>
-        <p style="margin:6px 0"><b>Install as an app:</b> in Chrome, use the install icon in the address bar (or menu ▸ <i>Add to Home screen</i> on a phone).</p>
-      </div>
-    </details>
-    <div class="actions">
-      <button class="primary" id="btnFly">Fly</button>
-      <button id="btnFull">Full screen</button>
-      <button id="btnSetup">Controller setup</button>
-      <span id="loadMsg" class="sub" style="margin:0"></span>
+        <h2>Mission</h2>
+        <div class="seg" data-key="mission" role="radiogroup" aria-label="Mission">
+          <button data-v="follow">Follow the convoy</button><button data-v="lead">Lead the convoy</button><button data-v="free">Free flight</button>
+        </div>
+        <p class="desc" id="descMission"></p>
+        <h2>Flying style</h2>
+        <div class="seg" data-key="flight" role="radiogroup" aria-label="Flying style">
+          <button data-v="gyro">Angle (easy)</button><button data-v="air">Air mode (acro)</button>
+        </div>
+        <p class="desc" id="descFlight"></p>
+        <div class="go">
+          <button class="primary" id="btnFly">Fly</button>
+          <div class="gomsg"><span id="flySummary"></span><span id="loadMsg" class="err"></span></div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <nav class="tabs" role="tablist" aria-label="Options">
+          <button role="tab" data-tab="controls">Controls</button><button role="tab" data-tab="settings">Settings</button><button role="tab" data-tab="music">Music</button><button role="tab" data-tab="help">Help</button>
+        </nav>
+
+        <div class="pane" data-pane="controls" role="tabpanel">
+          <div class="block">
+            <h3>Radio or gamepad</h3>
+            <p class="note">Pair your Pocket (ELRS BLE Joystick) or plug in a gamepad, move a stick, then map it.</p>
+            <button id="btnSetup">Set up controls</button>
+          </div>
+          <div class="block">
+            <h3>Phone as the controller</h3>
+            <p class="note">Play on this screen and steer with a phone. Nothing to install.</p>
+            <button id="btnPhone">Show pairing code</button>
+            <div id="phoneBox" class="phonebox hidden">
+              <div id="qr" class="qr"></div>
+              <div class="pinfo">
+                <div class="note">Scan with the phone camera, or open this link on the phone:</div>
+                <div class="plink" id="phoneLink"></div>
+                <button id="btnCopyLink" class="small">Copy link</button>
+                <div class="note hint">Keep the phone and this computer on the same Wi-Fi for the least lag.</div>
+                <div class="note">Code</div>
+                <div class="pcode" id="phoneCode"></div>
+                <div class="pad-status"><span class="dot" id="phoneDot"></span><span id="phoneStatus"></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="block">
+            <h3>On-screen sticks</h3>
+            <div class="seg" data-key="touch"><button data-v="auto">Phones only</button><button data-v="on">Always</button><button data-v="off">Off</button></div>
+          </div>
+          <button id="btnFull" class="ghost">Full screen</button>
+        </div>
+
+        <div class="pane" data-pane="settings" role="tabpanel">
+          <div class="block">
+            <h3>Convoy</h3>
+            <label class="lbl">Helicopters</label>
+            <div class="seg" data-key="count"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button></div>
+            <label class="lbl">If you fly into them</label>
+            <div class="seg" data-key="safe"><button data-v="on">They dodge you</button><button data-v="off">You crash</button></div>
+          </div>
+          <div class="block">
+            <h3>View</h3>
+            <label class="lbl">Starting camera <span class="k">C switches in flight</span></label>
+            <div class="seg" data-key="cam"><button data-v="chase">Chase</button><button data-v="gunner">Door gunner</button><button data-v="cockpit">Nose cam</button><button data-v="pilot">From ground</button></div>
+            <label class="lbl">Graphics</label>
+            <div class="seg" data-key="quality"><button data-v="high">High</button><button data-v="low">Fast</button></div>
+          </div>
+          <details><summary>Rates and stick feel</summary><div class="sliders" id="inputSliders"></div></details>
+          <details><summary>Camera, convoy speed and sound</summary><div class="sliders" id="sliders"></div></details>
+        </div>
+
+        <div class="pane" data-pane="music" role="tabpanel">
+          <div class="block">
+            <h3>Convoy soundtrack</h3>
+            <p class="note">Plays from take-off. With your own song, the convoy mission lasts exactly one play of it, then everyone lands.</p>
+            <div class="seg" data-key="musicSrc"><button data-v="mine">My song</button><button data-v="builtin">Built-in track</button><button data-v="off">No music</button></div>
+            <div id="songPick" class="songpick">
+              <button id="btnMusic">Choose song file</button><button id="btnMusicClear" class="ghost hidden">Remove</button>
+            </div>
+            <p class="note strong" id="musicName"></p>
+            <input type="file" id="musicFile" accept="audio/*" class="hidden">
+            <div class="sliders one" id="musicSliders"></div>
+          </div>
+        </div>
+
+        <div class="pane help" data-pane="help" role="tabpanel">
+          <details open>
+            <summary>Connect the Pocket over Bluetooth</summary>
+            <ol>
+              <li>On the Pocket, use a model with the <b>internal module set to CRSF / ExpressLRS</b>.</li>
+              <li>Press <b>SYS</b>, open <b>ExpressLRS</b>, scroll to <b>[BLE Joystick]</b> and press Enter.</li>
+              <li>On the computer, pair <b>“ExpressLRS Joystick”</b> in Bluetooth settings.</li>
+              <li>Come back, move a stick, then open the <b>Controls</b> tab and choose <b>Set up controls</b>.</li>
+            </ol>
+          </details>
+          <details>
+            <summary>Let a friend fly with their phone</summary>
+            <div class="friendhelp">
+              <ol>
+                <li>On this screen, open the <b>Controls</b> tab and choose <b>Show pairing code</b>.</li>
+                <li>On the phone: scan the code with the camera and open it in Chrome or Safari, or open this site and add <code>#pad</code> to the address, then type the code.</li>
+                <li>Pick <b>Angle (easy)</b>, tap <b>FLY</b>, push the left stick up.</li>
+              </ol>
+              <p>Or open the site on the phone itself: on-screen sticks appear automatically. To install it as an app, use Chrome's install icon (or <i>Add to Home screen</i> on a phone).</p>
+            </div>
+          </details>
+          <details>
+            <summary>Keys</summary>
+            <dl class="keys">
+              <dt><kbd>W</kbd> <kbd>S</kbd></dt><dd>Throttle</dd>
+              <dt><kbd>A</kbd> <kbd>D</kbd></dt><dd>Turn</dd>
+              <dt>Arrows</dt><dd>Tilt</dd>
+              <dt><kbd>Space</kbd></dt><dd>Arm / disarm</dd>
+              <dt><kbd>C</kbd></dt><dd>Change camera</dd>
+              <dt><kbd>V</kbd></dt><dd>Gunner: other door</dd>
+              <dt><kbd>M</kbd></dt><dd>Mute music</dd>
+              <dt><kbd>R</kbd> · <kbd>Esc</kbd></dt><dd>Reset · Pause</dd>
+            </dl>
+          </details>
+        </div>
+      </aside>
     </div>
   </div>
 </div>

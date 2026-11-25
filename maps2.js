@@ -1,6 +1,6 @@
 // Extra maps: Desert FOB, Forest River, Beach Sunrise
 import * as THREE from 'three';
-import { Reflector } from 'three/addons/objects/Reflector.js';
+import { Water } from 'three/addons/objects/Water.js';
 import { makeSky } from './sky.js';
 import * as T from './textures.js';
 import { std, instanced, sunShadow, glowSprite } from './maps.js';
@@ -36,18 +36,22 @@ function terrainMesh(g, H, { size = 900, segs = 220, cx = 0, cz = 0, colorFn, te
   const m = new THREE.Mesh(geo, std({ map: t, vertexColors: true, roughness: 1 }));
   m.receiveShadow = true; g.add(m); return m;
 }
-function makeWater(g, { w, h, x = 0, z = 0, level = 0, color, hi, opacity = 0.72, rough = 0.06 }) {
-  const nrm = T.waterNormalTex(); nrm.repeat.set(w / 7, h / 7);
-  let refl = null;
+// One water surface (no stacked planes = no flicker). High: reflective animated water; Low: simple opaque water.
+function makeWater(g, { w, h, x = 0, z = 0, level = 0, color, hi, sunDir, distortion = 2.2, size = 1.6 }) {
+  const nrm = T.waterNormalTex();
   if (hi) {
-    refl = new Reflector(new THREE.PlaneGeometry(w, h), { clipBias: 0.003, textureWidth: Math.floor(innerWidth * 0.5), textureHeight: Math.floor(innerHeight * 0.5), color: 0x8a96a0 });
-    refl.rotation.x = -Math.PI / 2; refl.position.set(x, level - 0.003, z); g.add(refl);
+    const water = new Water(new THREE.PlaneGeometry(w, h), {
+      textureWidth: 512, textureHeight: 512, waterNormals: nrm, sunDirection: (sunDir || new V3(0.3, 0.6, 0.2)).clone().normalize(),
+      sunColor: 0xffe2b8, waterColor: new THREE.Color(color).getHex(), distortionScale: distortion, fog: true,
+    });
+    water.rotation.x = -Math.PI / 2; water.position.set(x, level, z); water.material.uniforms.size.value = size;
+    g.add(water);
+    return { refl: water, update(t) { water.material.uniforms.time.value = t * 0.5; } };
   }
-  const mat = std({ color, roughness: rough, metalness: 0.15, normalMap: nrm, normalScale: new THREE.Vector2(0.16, 0.16), transparent: hi, opacity: hi ? opacity : 1 });
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h).rotateX(-Math.PI / 2), mat);
+  nrm.repeat.set(w / 7, h / 7);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h).rotateX(-Math.PI / 2), std({ color, roughness: 0.12, metalness: 0.2, normalMap: nrm, normalScale: new THREE.Vector2(0.18, 0.18) }));
   m.position.set(x, level, z); m.receiveShadow = true; g.add(m);
-  if (refl) { const o = refl.onBeforeRender; refl.onBeforeRender = function (...a) { m.visible = false; o.apply(this, a); m.visible = true; }; }
-  return { refl, update(t) { nrm.offset.set(t * 0.012, t * 0.007); } };
+  return { refl: null, update(t) { nrm.offset.set(t * 0.012, t * 0.007); } };
 }
 function addBox(g, world, w, h, d, x, y, z, mat, collide = true) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z);
@@ -224,7 +228,7 @@ export function buildForest({ scene, world, quality, renderer }) {
       return c.multiplyScalar(0.9 - Math.min(0.3, sl * 0.05));
     },
   });
-  const water = makeWater(g, { w: 700, h: 700, level: WATER, color: '#3f5c58', hi, opacity: 0.7, rough: 0.08 });
+  const water = makeWater(g, { w: 700, h: 700, level: WATER, color: '#2f4a46', hi, sunDir, distortion: 1.2, size: 2.4 });
 
   // route: down the river, out and back through a forest trail
   const pts = [[-66, 3.2, 40], [-74, 3.2, -40], [-66, 3.2, -120], [-50, 3, -198], [RX(-214) - 8, 2.5, -218]];
@@ -292,7 +296,7 @@ export function buildBeach({ scene, world, quality, renderer }) {
   const H = (x, z) => {
     const s = x - SH(z);
     if (s < 0) return 0.6 + ss(-35, -80, s) * (1.4 + 0.9 * Math.sin(z * 0.08) * Math.sin(x * 0.11));
-    return Math.max(-7, 0.6 - s * 0.07);
+    return Math.max(-7, 0.6 - s * 0.16);
   };
   world.terrain = H;
   const sunDir = new V3(1, 0.05, 0.22).normalize();
@@ -312,7 +316,7 @@ export function buildBeach({ scene, world, quality, renderer }) {
       return c;
     },
   });
-  const water = makeWater(g, { w: 700, h: 900, x: 330, z: 0, level: 0, color: '#1d5a70', hi, opacity: 0.78, rough: 0.05 });
+  const water = makeWater(g, { w: 900, h: 1100, x: 400, z: 0, level: 0, color: '#123f52', hi, sunDir, distortion: 2.6, size: 1.4 });
 
   // pier
   const plank = T.plankTex(); plank.repeat.set(30, 1);

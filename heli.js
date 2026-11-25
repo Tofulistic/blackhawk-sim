@@ -214,6 +214,22 @@ export function buildBlackHawk({ tailNumber = '55', base = '#5e6252', tint = nul
     add(new THREE.CylinderGeometry(0.3, 0.3, 1.7, 14).rotateX(Math.PI / 2), plain, s * 2.55, 1.85, -2.2);
     add(new THREE.CircleGeometry(0.27, 14), dark, s * 2.55, 1.85, -3.06).rotation.y = Math.PI;
   }
+  // door guns (M134-style rotary guns on pintle mounts at the cabin doors)
+  const gunMetal = mat('#1b1c1b', 0.45, 0.6);
+  for (const sd of [-1, 1]) {
+    const gx = sd * 1.32, gy = 2.05, gz = -3.25;
+    add(new THREE.CylinderGeometry(0.05, 0.05, 0.7, 8), metal, gx, gy - 0.3, gz);             // pintle post
+    add(new THREE.BoxGeometry(0.22, 0.2, 0.55), gunMetal, gx, gy, gz + 0.05);                  // receiver
+    const cl = new THREE.Group(); cl.position.set(gx, gy, gz - 0.5); model.add(cl);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.95, 6).rotateX(Math.PI / 2), gunMetal);
+      b.position.set(Math.cos(a) * 0.06, Math.sin(a) * 0.06, -0.2); cl.add(b);
+    }
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.02, 6, 14), gunMetal); ring.position.z = -0.55; cl.add(ring);
+    cl.rotation.y = sd * 0.25;
+    add(new THREE.BoxGeometry(0.12, 0.16, 0.22), gunMetal, gx - sd * 0.05, gy - 0.12, gz + 0.38); // grips
+  }
   // mast + hub
   const RZ = -1.55, RY = 4.55;
   add(new THREE.CylinderGeometry(0.2, 0.28, 0.9, 12), metal, 0, 4.0, RZ);
