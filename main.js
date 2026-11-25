@@ -17,11 +17,13 @@ import { Music } from './music.js';
 import { BuiltinTrack } from './synth.js';
 import { initTouch } from './touch.js';
 import { runSplash } from './splash.js';
+import { initIndicators, animatePane, swapText, enterMenu, reveal } from './menuanim.js';
 import { PhoneLink, runPadPage, newCode, SITE_URL } from './phone.js';
 import { helipadTex } from './textures.js';
 import { blobShadowTex, glowTex } from './textures.js';
 
 const $ = (id) => document.getElementById(id);
+let placeInd = null; // set once the menu's sliding indicators are built
 const V3 = THREE.Vector3;
 const _cv = new THREE.Vector3(), _cv2 = new THREE.Vector3();
 
@@ -422,6 +424,7 @@ function syncSeg() {
     seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', String(cfg[k]) === b.dataset.v));
 
   });
+  placeInd?.();
 }
 document.querySelectorAll('.seg[data-key]').forEach((seg) => seg.addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return; cfg[seg.dataset.key] = b.dataset.v; saveCfg(); syncSeg(); if (seg.dataset.key === 'musicSrc') musicUI(); describe();
@@ -450,20 +453,27 @@ const DESC = {
 };
 const MAP_LABEL = { farm: 'Farm', yard: 'Container Yard', desert: 'Desert Base', forest: 'Forest River', beach: 'Beach' };
 function describe() {
-  $('descMission').textContent = DESC.mission[cfg.mission] || '';
-  $('descFlight').textContent = DESC.flight[cfg.flight] || '';
+  swapText($('descMission'), DESC.mission[cfg.mission] || '');
+  swapText($('descFlight'), DESC.flight[cfg.flight] || '');
   const conv = cfg.mission === 'free' ? 'solo' : `${cfg.count} heli${cfg.count > 1 ? 's' : ''}`;
-  $('flySummary').textContent = `${MAP_LABEL[cfg.map] || ''} · ${conv} · ${cfg.flight === 'air' ? 'Air mode' : 'Angle mode'}`;
+  swapText($('flySummary'), `${MAP_LABEL[cfg.map] || ''} · ${conv} · ${cfg.flight === 'air' ? 'Air mode' : 'Angle mode'}`);
 }
 // option tabs
+const TAB_ORDER = ['controls', 'settings', 'music', 'help'];
 function showTab(t) {
+  const prev = cfg.tab; const changed = prev && prev !== t;
   document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   document.querySelectorAll('.pane[data-pane]').forEach((p) => p.classList.toggle('active', p.dataset.pane === t));
   cfg.tab = t; saveCfg();
+  if (changed) animatePane(document.querySelector(`.pane[data-pane="${t}"]`), Math.sign(TAB_ORDER.indexOf(t) - TAB_ORDER.indexOf(prev)));
+  placeInd?.();
 }
 document.querySelectorAll('.tabs [data-tab]').forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
+placeInd = initIndicators();
 showTab(cfg.tab || 'controls');
 describe();
+requestAnimationFrame(() => placeInd(true));
+document.fonts?.ready.then(() => placeInd(true));
 
 const setup = initSetup(input, () => { if (game) { $('pause').classList.remove('hidden'); } else $('menu').classList.remove('hidden'); });
 $('btnSetup').onclick = () => { $('menu').classList.add('hidden'); setup.open(); };
@@ -492,7 +502,7 @@ function setPaused(p) {
   if (!game) return; game.paused = p; $('pause').classList.toggle('hidden', !p);
   if (p) { audio.mute(); allTracks((t) => t.pause()); } else allTracks((t) => t.resume());
 }
-function toMenu() { setPaused(false); allTracks((t) => t.stop()); game.dispose(); game = null; audio.mute(); touch.show(false); $('results').classList.add('hidden'); $('hud').classList.add('hidden'); $('menu').classList.remove('hidden'); }
+function toMenu() { setPaused(false); allTracks((t) => t.stop()); game.dispose(); game = null; audio.mute(); touch.show(false); $('results').classList.add('hidden'); $('hud').classList.add('hidden'); $('menu').classList.remove('hidden'); placeInd(true); enterMenu(); }
 $('btnResume').onclick = () => setPaused(false);
 $('btnRestart').onclick = () => { game.restart(); setPaused(false); };
 $('btnQuit').onclick = toMenu;
@@ -533,9 +543,10 @@ function loadQR() {
   return tryLoad(0);
 }
 $('btnPhone').onclick = async () => {
+  const wasHidden = $('phoneBox').classList.contains('hidden');
   const code = newCode(); const url = `${SITE_URL}#pad-${code}`;
   $('phoneBox').classList.remove('hidden'); $('phoneCode').textContent = code; $('phoneLink').textContent = url;
-  $('btnPhone').textContent = 'New code';
+  $('btnPhone').textContent = 'New code'; if (wasHidden) reveal($('phoneBox'));
   const box = $('qr'); box.innerHTML = ''; box.classList.remove('hidden');
   let ok = false;
   if (await loadQR()) {
@@ -573,7 +584,7 @@ addEventListener('gamepadconnected', padStatus); addEventListener('gamepaddiscon
 // phone opened with #pad-<code>: become the controller instead of the sim
 const padMatch = /^#pad(?:-([a-z0-9]{4,6}))?$/.exec(location.hash);
 if (padMatch) runPadPage(padMatch[1] || '', input, touch);
-else runSplash();
+else runSplash().then(() => { placeInd(true); enterMenu(); });
 setInterval(() => { if (!game && link.status === 'connected') link.tell({ flying: false }); }, 1000);
 
 let last = performance.now();

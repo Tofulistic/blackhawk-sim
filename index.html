@@ -153,6 +153,33 @@
   #splash.go .sp-tap { opacity:0; animation:none; transition:opacity .3s; }
   @keyframes spPulse { 50% { opacity:.35; } }
   @media (prefers-reduced-motion: reduce) { .sp-l, .sp-name { transition:none; } #splash.down .sp-dust { animation:none; } }
+
+  /* ---------- menu motion ---------- */
+  .has-ind { position:relative; }
+  .has-ind > .ind { position:absolute; left:0; top:0; border-radius:8px; pointer-events:none; z-index:0; opacity:0;
+    background:rgba(215,178,58,.18); box-shadow:0 0 0 1px var(--accent) inset;
+    transition:transform .34s cubic-bezier(.2,.9,.25,1), width .34s cubic-bezier(.2,.9,.25,1), height .34s cubic-bezier(.2,.9,.25,1), opacity .2s; }
+  .has-ind > .ind.line { background:var(--accent); box-shadow:none; border-radius:2px; }
+  .has-ind > button { position:relative; z-index:1; }
+  .menu .seg.has-ind > button.on { background:transparent; border-color:transparent; }
+  .menu .tabs.has-ind button[aria-selected=true] { border-bottom-color:transparent; }
+  .menu button { transition:background .18s ease, border-color .18s ease, color .18s ease, transform .14s cubic-bezier(.2,.9,.25,1), box-shadow .25s ease; }
+  .menu button:active { transform:scale(.97); }
+  .maps .tile { transition:transform .28s cubic-bezier(.2,.9,.25,1), box-shadow .28s ease, background .18s ease; }
+  .maps .tile::before { transition:transform .6s cubic-bezier(.2,.9,.25,1), filter .3s ease; transform-origin:50% 70%; }
+  .maps .tile:hover { transform:translateY(-3px); box-shadow:0 10px 22px rgba(0,0,0,.35); }
+  .maps .tile:hover::before { transform:scale(1.06); filter:saturate(1.15); }
+  .maps .tile.on { box-shadow:0 0 0 2px var(--accent) inset, 0 8px 20px rgba(0,0,0,.3); }
+  .maps .tile:active { transform:translateY(-1px) scale(.98); }
+  .go .primary { transition:transform .16s cubic-bezier(.2,.9,.25,1), box-shadow .3s ease, filter .2s; }
+  .go .primary:hover { transform:translateY(-1px); box-shadow:0 10px 28px rgba(215,178,58,.32); }
+  .go .primary:active { transform:scale(.95); box-shadow:0 4px 12px rgba(215,178,58,.25); }
+  .side details[open] > :not(summary) { animation:menuFade .32s cubic-bezier(.2,.9,.25,1); }
+  .side summary { transition:color .18s; } .side summary:hover { color:var(--ink); }
+  @keyframes menuFade { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .menu *, .menu *::before { transition:none !important; animation:none !important; }
+  }
   /* ---------- main menu ---------- */
   .menu { align-items:flex-start; padding:clamp(12px,3vh,36px) 16px; background:radial-gradient(120% 90% at 30% 0%, rgba(52,58,40,.6), rgba(6,7,5,.94)); }
   .shell { width:min(1120px,100%); margin:auto; min-width:0; }

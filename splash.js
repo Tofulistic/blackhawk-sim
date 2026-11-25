@@ -5,23 +5,38 @@ const $ = (id) => document.getElementById(id);
 function chime() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const out = ctx.createGain(); out.gain.value = 0.55; out.connect(ctx.destination);
+    const out = ctx.createGain(); out.gain.value = 1.15; out.connect(ctx.destination);
     // feedback echo for notes 2 and 3 (darkens and fades each repeat)
-    const delay = ctx.createDelay(1); delay.delayTime.value = 0.34;
+    const delay = ctx.createDelay(1); delay.delayTime.value = 0.36;
     const fb = ctx.createGain(); fb.gain.value = 0.58;
     const tone = ctx.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 2600;
     const wet = ctx.createGain(); wet.gain.value = 0.7;
     delay.connect(tone).connect(fb).connect(delay); tone.connect(wet).connect(out);
-    const bell = (f, t, echo) => {
-      for (const [mult, amp, dec] of [[1, 0.5, 1.6], [2, 0.14, 0.7], [3.01, 0.06, 0.4]]) {
-        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f * mult;
-        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(amp, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
-        o.connect(g); g.connect(out); if (echo) g.connect(delay);
-        o.start(t); o.stop(t + dec + 0.05);
+    // piano-like voice: hammer click, slightly stretched harmonics, two-stage decay, brightness that fades
+    const noise = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
+    { const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length); }
+    const piano = (f, t, echo) => {
+      const bus = ctx.createGain(); bus.gain.value = 1;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.4;
+      lp.frequency.setValueAtTime(Math.min(9000, f * 9), t); lp.frequency.exponentialRampToValueAtTime(Math.max(500, f * 2), t + 1.6);
+      bus.connect(lp); lp.connect(out); if (echo) lp.connect(delay);
+      const parts = [[1, 0.42], [2, 0.22], [3, 0.11], [4, 0.07], [5, 0.035], [6, 0.02]];
+      for (const [n, amp] of parts) {
+        for (const det of [-1.2, 1.2]) { // two slightly detuned strings per note
+          const o = ctx.createOscillator(); o.type = 'sine';
+          o.frequency.value = f * n * Math.sqrt(1 + 0.00035 * n * n); o.detune.value = det;
+          const g = ctx.createGain(); const a = amp * 0.5;
+          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.006);
+          g.gain.exponentialRampToValueAtTime(a * 0.35, t + 0.25 / n + 0.12); // fast initial drop
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 2.6 / Math.sqrt(n)); // long tail
+          o.connect(g).connect(bus); o.start(t); o.stop(t + 2.7);
+        }
       }
+      const h = ctx.createBufferSource(); h.buffer = noise; const hf = ctx.createBiquadFilter(); hf.type = 'bandpass'; hf.frequency.value = f * 4; hf.Q.value = 1.5;
+      const hg = ctx.createGain(); hg.gain.value = 0.08; h.connect(hf).connect(hg).connect(bus); h.start(t);
     };
     const t0 = ctx.currentTime + 0.05;
-    return { ctx, play(offset) { const t = t0 + offset; bell(523.25, t, false); bell(659.25, t + 0.26, true); bell(783.99, t + 0.52, true); } };
+    return { ctx, play(offset) { const t = t0 + offset; piano(523.25, t, false); piano(659.25, t + 0.26, true); piano(783.99, t + 0.52, true); } };
   } catch (e) { return null; }
 }
 
